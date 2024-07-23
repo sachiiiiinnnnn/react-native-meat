@@ -145,10 +145,11 @@ export const chicken = [
     uses: 'juicy bone-in & boneless',
     price: '500 g',
     pieces: "| 12 - 18 Pieces",
-    money: "₹600",
+    money: "₹ 600",
     deliveryTime: 'Today in 30mins',
     image: Images.loginBackground1, // Add the e for id '1'imag
-    offer :"22%"
+    offer :"22%",
+    count:0
   },
   {
     id: '2',
@@ -156,10 +157,12 @@ export const chicken = [
     uses: 'juicy bone-in & boneless',
     price: '250 g',
     pieces: "| 20 - 25 Pieces",
-    money: "₹309",
+    money: "₹ 309",
     deliveryTime: 'Today in 30mins',
     image: Images.loginBackground,
-    offer :"22%" // Add the image for id '2'
+    offer :"22%"
+    ,
+    count:0 // Add the image for id '2'
   },
   {
     id: '3',
@@ -167,10 +170,11 @@ export const chicken = [
     uses: 'juicy bone-in & boneless',
     price: '500 g',
     pieces: "| 12 - 18 Pieces",
-    money: "₹800",
+    money: "₹ 800",
     deliveryTime: 'Today in 30mins',
     image: Images.loginBackground2 ,
-    offer :"22%" // Add the image for id '3'
+    offer :"22%" ,
+    count:0// Add the image for id '3'
   },
 ];
 
@@ -181,10 +185,11 @@ export const mutton = [
     uses: 'juicy bone-in & boneless',
     price: '500 g',
     pieces: "| 12 - 18 Pieces",
-    money: "₹200",
+    money: "₹ 200",
     deliveryTime: 'Today in 30mins',
     image: Images.muttonKuzhambu,
-    offer :"22%" // Add the image for id '1'
+    offer :"22%" ,
+    count:0// Add the image for id '1'
   },
   {
     id: '2',
@@ -192,10 +197,11 @@ export const mutton = [
     uses: 'juicy bone-in & boneless',
     price: '500 g',
     pieces: "| 12 - 18 Pieces",
-    money: "₹20",
+    money: "₹ 20",
     deliveryTime: 'Today in 30mins',
     image: Images.muttonKheema ,
-    offer :"22%"// Add the image for id '2'
+    offer :"22%",
+    count:0// Add the image for id '2'
   },
   {
     id: '3',
@@ -203,10 +209,11 @@ export const mutton = [
     uses: 'juicy bone-in & boneless',
     price: '500 g',
     pieces: "| 12 - 18 Pieces",
-    money: "₹200",
+    money: "₹ 200",
     deliveryTime: 'Today in 30mins',
     image: Images.muttonSoup,
-    offer :"22%" // Add the image for id '1'
+    offer :"22%",
+    count:0 // Add the image for id '1'
   },
   {
     id: '4',
@@ -214,10 +221,11 @@ export const mutton = [
     uses: 'juicy bone-in & boneless',
     price: '500 g',
     pieces: "| 12 - 18 Pieces",
-    money: "₹200",
+    money: "₹ 200",
     deliveryTime: 'Today in 30mins',
     image: Images.mutton,
-    offer :"22%" // Add the image for id '2'
+    offer :"22%",
+    count:0 // Add the image for id '2'
   },
 ];
 
@@ -228,10 +236,11 @@ export const fish = [
     uses: 'juicy bone-in & boneless',
     price: '500 g',
     pieces: "| 12 - 18 Pieces",
-    money: "₹200",
+    money: "₹ 200",
     deliveryTime: 'Today in 30mins',
     image: Images.fishs,
-    offer :"22%" // Add the image for id '1'
+    offer :"22%",
+    count:0 // Add the image for id '1'
   },
   {
     id: '2',
@@ -239,10 +248,11 @@ export const fish = [
     uses: 'juicy bone-in & boneless',
     price: '500 g',
     pieces: "| 12 - 18 Pieces",
-    money: "₹200",
+    money: "₹ 200",
     deliveryTime: 'Today in 30mins',
     image: Images.fish1,
-    offer :"22%" // Add the image for id '2'
+    offer :"22%",
+    count:0 // Add the image for id '2'
   },
   {
     id: '3',
@@ -250,10 +260,11 @@ export const fish = [
     uses: 'juicy bone-in & boneless',
     price: '500 g',
     pieces: "| 12 - 18 Pieces",
-    money: "₹200",
+    money: "₹ 200",
     deliveryTime: 'Today in 30mins',
     image: Images.fish2,
-    offer :"22%" // Add the image for id '1'
+    offer :"22%",
+    count:0 // Add the image for id '1'
   },
   {
     id: '4',
@@ -261,10 +272,11 @@ export const fish = [
     uses: 'juicy bone-in & boneless',
     price: '500 g',
     pieces: "| 12 - 18 Pieces",
-    money: "₹200",
+    money: "₹ 200",
     deliveryTime: 'Today in 30mins',
     image: Images.fish3,
-    offer :"22%" // Add the image for id '2'
+    offer :"22%" ,
+    count:0// Add the image for id '2'
   },
   {
     id: '5',
@@ -272,10 +284,11 @@ export const fish = [
     uses: 'juicy bone-in & boneless',
     price: '500 g',
     pieces: "| 12 - 18 Pieces",
-    money: "₹200",
+    money: "₹ 200",
     deliveryTime: 'Today in 30mins',
     image: Images.fish5,
-    offer :"22%" // Add the image for id '1'
+    offer :"22%",
+    count:0 // Add the image for id '1'
   },
   {
     id: '6',
@@ -283,10 +296,11 @@ export const fish = [
     uses: 'juicy bone-in & boneless',
     price: '500 g',
     pieces: "| 12 - 18 Pieces",
-    money: "₹200",
+    money: "₹ 200",
     deliveryTime: 'Today in 30mins',
     image: Images.fish6,
-    offer :"22%" // Add the image for id '2'
+    offer :"22%" ,
+    count:0// Add the image for id '2'
   },
 ];
 
@@ -297,10 +311,11 @@ export const beaf = [
     uses: 'juicy bone-in & boneless',
     price: '500 g',
     pieces: "| 12 - 18 Pieces",
-    money: "₹200",
+    money: "₹ 200",
     deliveryTime: 'Today in 30mins',
     image: Images.loginBackground,
-    offer :"22%" // Add the image for id '1'
+    offer :"22%",
+    count:0 // Add the image for id '1'
   },
   {
     id: '2',
@@ -308,10 +323,11 @@ export const beaf = [
     uses: 'juicy bone-in & boneless',
     price: '500 g',
     pieces: "| 12 - 18 Pieces",
-    money: "₹200",
+    money: "₹ 200",
     deliveryTime: 'Today in 30mins',
     image: Images.loginBackground,
-    offer :"22%" // Add the image for id '2'
+    offer :"22%",
+    count:0 // Add the image for id '2'
   },
 ];
 
@@ -320,23 +336,25 @@ export const egg = [
     id: '1',
     name: 'City Meat Market',
     uses: 'juicy bone-in & boneless',
-    price: '500 g',
-    pieces: "| 12 - 18 Pieces",
-    money: "₹200",
+    price: '6 - 10 Pieces',
+    // pieces: "| 12 - 18 Pieces",
+    money: "₹ 200",
     deliveryTime: 'Today in 30mins',
     image: Images.loginBackground,
-    offer :"22%" // Add the image for id '1'
+    offer :"22%",
+    count:0 // Add the image for id '1'
   },
   {
     id: '2',
     name: 'Quality Meat Shop',
     uses: 'juicy bone-in & boneless',
-    price: '500 g',
-    pieces: "| 12 - 18 Pieces",
-    money: "₹200",
+    price: '6 - 10 Pieces',
+    // pieces: "| 12 - 18 Pieces",
+    money: "₹ 200",
     deliveryTime: 'Today in 30mins',
     image: Images.loginBackground ,
-    offer :"22%"// Add the image for id '2'
+    offer :"22%",
+    count:0// Add the image for id '2'
   },
 ];
 export const prawn= [
@@ -346,10 +364,11 @@ export const prawn= [
     uses: 'juicy bone-in & boneless',
     price: '500 g',
     pieces: "| 12 - 18 Pieces",
-    money: "₹200",
+    money: "₹ 200",
     deliveryTime: 'Today in 30mins',
     image: Images.loginBackground1,
-    offer :"22%" // Add the image for id '1'
+    offer :"22%",
+    count:0 // Add the image for id '1'
   },
   {
     id: '2',
@@ -357,9 +376,10 @@ export const prawn= [
     uses: 'juicy bone-in & boneless',
     price: '500 g',
     pieces: "| 12 - 18 Pieces",
-    money: "₹200",
+    money: "₹ 200",
     deliveryTime: 'Today in 30mins',
     image: Images.loginBackground,
-    offer :"22%" // Add the image for id '2'
+    offer :"22%" ,
+    count:0// Add the image for id '2'
   },
 ]

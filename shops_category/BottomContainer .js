@@ -1,23 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import Icons from '../constants/Icons';
 import Theme from '../constants/Theme';
-import { useState } from 'react';
-
-const BottomContainer = ({ totalPrice, onViewCart, initialCount, updateTotalPrice }) => {
+import Icons from '../constants/Icons';
+const BottomContainer = ({ totalItemCount, totalPrice, onViewCart, initialCount, updateTotalPrice }) => {
   const [count, setCount] = useState(initialCount);
 
   const handleViewCart = () => {
-    onViewCart(); // Call the onViewCart function passed from the parent component
+    if (typeof onViewCart === 'function') {
+      onViewCart();
+    }
   };
 
-  // Update the count only if it's greater than the initial count
   const handleIncrementCount = () => {
-    if (count > initialCount) {
-      setCount(count + 1);
-      updateTotalPrice(totalPrice + 1);
-    }
+    setCount(count + 1);
+    updateTotalPrice(totalPrice + 1);
   };
 
   const handleDecrementCount = () => {
@@ -28,8 +24,9 @@ const BottomContainer = ({ totalPrice, onViewCart, initialCount, updateTotalPric
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.totalText}>Total Price: ₹{totalPrice}</Text>
+    <View style={[styles.container, { bottom: count > initialCount ? 50 : 0 }]}>
+      <Text style={[styles.itemCountText, Theme.FONTS.h5]}>{totalItemCount} items</Text>
+      <Text style={styles.totalText}>| ₹{totalPrice}</Text>
       <View style={styles.countContainer}>
         <TouchableOpacity onPress={handleDecrementCount}>
           <Text style={styles.countText}>-</Text>
@@ -55,19 +52,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 13,
     backgroundColor: Theme.COLORS.black,
-    borderColor:'gray',
-    borderWidth:2,
+    borderColor: 'gray',
+    borderWidth: 2,
     position: 'absolute',
-    bottom: 50,
+    bottom: 0,
     width: '90%',
     alignSelf: 'center',
     borderRadius: 10,
-    height: 50
+    height: 50,
+    elevation: 5,
+    marginBottom:10, // Add elevation to ensure it stays above other content
   },
   totalText: {
     color: Theme.COLORS.white,
     fontSize: 14,
     fontWeight: 'bold',
+    marginRight:110
+  },
+  itemCountText: {
+    color: 'white',
+    fontWeight:'bold',
+
   },
   viewCartButton: {
     flexDirection: 'row',
@@ -79,12 +84,17 @@ const styles = StyleSheet.create({
     color: Theme.COLORS.white,
     fontWeight: 'bold',
     marginRight: 5,
-    fontSize: 13
+    fontSize: 13,
   },
   arrowIcon: {
     width: 10,
     height: 10,
     tintColor: Theme.COLORS.white,
+  },
+  itemCount: {
+    color:'white',
+    fontSize: 15,
+    fontWeight:'bold'
   },
 });
 

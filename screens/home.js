@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity, FlatList, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Swiper from 'react-native-swiper';
@@ -6,15 +6,40 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Images from '../constants/Images';
 import Theme from '../constants/Theme';
 import { imageData, sellerData } from '../constants/Data';
- import BottomContainer from '../shops_category/BottomContainer '
+import BottomContainer from '../shops_category/BottomContainer ';
+import Icons from '../constants/Icons'; // Import the icons
+import { instance } from '../constants/Common';
+import { useSelector } from 'react-redux';
 
 const { width } = Dimensions.get('window');
 
 const Home = () => {
   const navigation = useNavigation();
   const [selectedItems, setSelectedItems] = useState([]);
-  const [totalPrice, setTotalPrice] = useState(0);
 
+  const cartState = useSelector(state => state.cart) || {}; // Default to an empty object if undefined
+
+  // Use optional chaining and default values to handle undefined cases
+  const totalItemCount = (cartState.cartItems || []).reduce((total, item) => total + (item.count || 0), 0);
+  const totalPrice = cartState.totalPrice || 0;
+//integration category
+  const [categoryData,setCategoryData]=useState([])
+
+  const getCategory = async () => {
+    try {
+      const response = await instance.get('/api/user/Category');
+      if (response.status === 200) {
+        setCategoryData(response.data); 
+      } 
+    } catch (error) {
+        console.error("error:", error);
+      }
+    
+  }
+
+  useEffect(() => {
+    getCategory();
+  },[])
 
   const handleCategoryPress = (categoryName) => {
     navigation.navigate('Shops', { category: categoryName });
@@ -24,12 +49,10 @@ const Home = () => {
     setSelectedItems((prevItems) => {
       const existingItem = prevItems.find((prevItem) => prevItem.id === item.id);
       if (existingItem) {
-        // Item exists, update its count
         return prevItems.map((prevItem) =>
           prevItem.id === item.id ? { ...prevItem, count: prevItem.count + 1 } : prevItem
         );
       } else {
-        // Item doesn't exist, add it with count 1
         return [...prevItems, { ...item, count: 1 }];
       }
     });
@@ -53,32 +76,12 @@ const Home = () => {
     setTotalPrice((prevTotal) => Math.max(0, prevTotal - 1));
   };
 
-  const handleViewCart = () => {
-    navigation.navigate('ViewCart', { selectedItems, totalPrice });
-  };
-
-
-    // Render the BottomContainer if selectedItems has any items
-    const renderBottomContainer = () => {
-      if (selectedItems.length > 0) {
-        return (
-          <BottomContainer
-            totalPrice={totalPrice}
-            initialCount={0}
-            onViewCart={handleViewCart}
-            updateTotalPrice={setTotalPrice}
-          />
-      
-        );
-      }
-      return null;
-    };
-
+ 
   const renderImage = ({ item }) => (
-    <TouchableOpacity onPress={() => handleCategoryPress(item.name)}>
+    <TouchableOpacity onPress={() => handleCategoryPress(item.categoryName)}>
       <View style={styles.imageContainer}>
-        <Image source={item.source} style={styles.image} resizeMode="cover" />
-        <Text style={styles.imageName}>{item.name}</Text>
+        <Image source={{ uri: item.image }} style={styles.image} resizeMode="cover" />
+        <Text style={styles.imageName}>{item.categoryName}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -131,15 +134,21 @@ const Home = () => {
 
   return (
     <View style={styles.container}>
-      {/* Fixed Location container */}
-      <View style={styles.locationContainer}>
-        <Text style={styles.locationText}>Location</Text>
-      </View>
+      {/* Location container with LinearGradient */}
+      <LinearGradient colors={[  '#ffcccc',  'white']} style={styles.locationContainer}>
+        <View style={styles.locationRow}>
+          <Image source={Icons.location} style={styles.locationIcon} />
+          <View>
+            <Text style={styles.addressText}>Address</Text>
+            <Text style={styles.locationText}>11, A, block - Medavakkam</Text>
+          </View>
+        </View>
+      </LinearGradient>
 
       {/* Scrollable content */}
       <ScrollView style={styles.scrollView}>
         <LinearGradient colors={['#ffcccc', 'white', 'white']} style={styles.scrollContainer}>
-          {/* Swipeable container */}
+          {/* Swiper container */}
           <View style={styles.swiperContainer}>
             <Swiper dot={<View style={styles.dot} />} activeDot={<View style={styles.activeDot} />} showsPagination={true} loop={true}>
               {/* Image 1 */}
@@ -178,7 +187,7 @@ const Home = () => {
             <Text style={[styles.shopText, Theme.FONTS.h5]}>Choose from the widest range of premium meats</Text>
             <FlatList
               horizontal
-              data={imageData}
+              data={categoryData}
               renderItem={renderImage}
               keyExtractor={(item) => item.id}
               showsHorizontalScrollIndicator={false}
@@ -201,7 +210,11 @@ const Home = () => {
           </View>
         </LinearGradient>
       </ScrollView>
-      {renderBottomContainer()}
+      <BottomContainer
+        totalItemCount={totalItemCount}
+        totalPrice={totalPrice}
+        onViewCart={() => navigation.navigate('ViewCart')}
+      />
     </View>
   );
 };
@@ -214,21 +227,37 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     width: '100%',
-    height: 70,
-    backgroundColor: Theme.COLORS.white,
-    elevation: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 10,
+    height: 80,
     zIndex: 10,
+
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between', // Added for spacing between items
+    borderBottomWidth: 1, // Added to create a line at the bottom of the location container
+    borderBottomColor: 'rgba(0,0,0,0.1)', // Added to specify the color of the bottom line
   },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop:20
+    },
+    locationIcon: {
+    width: 20,
+    height: 20,
+    tintColor: Theme.COLORS.maroon,
+    marginRight: 10,
+    marginLeft:20,
+    },
+    addressText: {
+    fontSize: 16,
+    },
   locationText: {
     color: Theme.COLORS.black,
     fontWeight: 'bold',
     fontSize: 18,
   },
   scrollView: {
-    marginTop: 70,
+    marginTop: 80,
   },
   scrollContainer: {
     padding: 12,
@@ -257,7 +286,7 @@ const styles = StyleSheet.create({
     backgroundColor: Theme.COLORS.lightGray3,
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: 4, // Corrected to specify the borderRadius for dots
     marginHorizontal: 5,
     top: 0,
   },
@@ -270,15 +299,15 @@ const styles = StyleSheet.create({
     top: 0,
   },
   shopContainer: {
-    marginTop: 0,
+    marginTop: 20,
   },
   shopText: {
-    marginBottom: 0,
+    marginBottom: 10,
     marginLeft: 20,
   },
   imageRow: {
     paddingHorizontal: 10,
-    marginTop: 0,
+    marginTop: 10,
   },
   imageContainer: {
     alignItems: 'center',
@@ -290,7 +319,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   imageName: {
-    marginTop: 0,
+    marginTop: 5,
     fontSize: 13,
     fontWeight: 'bold',
     color: Theme.COLORS.black,
@@ -299,7 +328,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   sellerText: {
-    marginBottom: 0,
+    marginBottom: 10,
     marginLeft: 20,
   },
   sellerRow: {
@@ -369,20 +398,18 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: Theme.COLORS.white,
     fontSize: 16,
-    fontWeight:'bold'
+    fontWeight: 'bold',
   },
   counterContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10,
-    
     backgroundColor: Theme.COLORS.maroon,
-    width:'50%',
-    borderRadius:5,
+    width: '50%',
+    borderRadius: 5,
   },
   counterButton: {
-    
     borderRadius: 5,
     padding: 5,
     alignItems: 'center',
@@ -393,12 +420,12 @@ const styles = StyleSheet.create({
   counterText: {
     color: Theme.COLORS.white,
     fontSize: 18,
-    fontWeight:'bold',
+    fontWeight: 'bold',
   },
   counterValue: {
     fontSize: 16,
     marginHorizontal: 10,
-    color:'white'
+    color: 'white',
   },
 });
 

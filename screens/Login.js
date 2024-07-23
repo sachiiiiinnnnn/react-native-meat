@@ -5,18 +5,30 @@ import Swiper from 'react-native-swiper';
 import { Input } from 'react-native-elements';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Theme from '../constants/Theme';
+import { instance } from '../constants/Common';
 
 const Login = ({ navigation }) => {
   const theme = useTheme();
   const [mobileNumber, setMobileNumber] = useState('');
+  const [id,setId]=useState("")
 
   const handleContinue = async () => {
     if (mobileNumber.length === 10) {
       try {
-        await AsyncStorage.setItem('mobileNumber', mobileNumber);
-        navigation.replace('Home');
-      } catch (e) {
-        console.error('Failed to save the mobile number to the storage', e);
+        const response = await instance.post('/api/user/Login/Otp', {
+          customerMobile: mobileNumber,
+        });
+
+        if (response.data ) {
+          console.log(response.data);
+          Alert.alert('OTP Sent', 'Please check your mobile for the OTP');
+          navigation.replace('otp', { customerId: response.data.customerId }); 
+        } else {
+          Alert.alert('Error', 'Failed to generate OTP');
+        }
+      } catch (error) {
+        console.error('Failed to send OTP', error);
+        Alert.alert('Error', 'Failed to send OTP');
       }
     } else {
       Alert.alert('Invalid Number', 'Please enter a valid 10-digit mobile number');
@@ -26,6 +38,7 @@ const Login = ({ navigation }) => {
   const handleSkip = () => {
     navigation.replace('Home');
   };
+
 
   return (
     <View style={{ flex: 1 }}>
@@ -160,9 +173,9 @@ const styles = StyleSheet.create({
     marginBottom: 130,
   },
   title: {
-    fontWeight:700,
+    fontWeight: 700,
     bottom: 10,
-    fontSize:18
+    fontSize: 18
   },
   inputContainer: {
     flexDirection: 'row',

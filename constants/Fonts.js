@@ -3,7 +3,7 @@ import * as Font from 'expo-font';
 const loadFonts = async () => {
   await Font.loadAsync({
     'Roboto-Black': require('../assets/fonts/Roboto-Black.ttf'),
-    'Roboto-Black':require('../assets/fonts/Roboto-BlackItalic.ttf'),
+    'Roboto-Black':require('../assets/fonts/Roboto-BlackItalic.ttf'), 
     "Roboto-Bold" :require('../assets/fonts/Roboto-Bold.ttf'),
     "Roboto-Bold-italic" :require('../assets/fonts/Roboto-BoldItalic.ttf'),
     "Roboto-Light" :require('../assets/fonts/Roboto-Light.ttf'),

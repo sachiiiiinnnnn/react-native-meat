@@ -36,13 +36,16 @@ const BottomTab = () => {
         name="home"
         component={HomeScreen}
         options={{
+      
           tabBarIcon: ({ focused }) => (
             <TabIcon focused={focused} icon={Icons.home} label="Home" />
           ),
           headerShown: false // Hide the screen name in the upper position
         }}
+        
       />
-      <Tab.Screen
+
+      {/* <Tab.Screen
         name="Categories"
         component={CategoriesScreen}
         options={{
@@ -51,7 +54,8 @@ const BottomTab = () => {
           ),
           headerShown: false
         }}
-      />
+      /> */}
+       
       <Tab.Screen
         name="Search"
         component={SearchScreen}

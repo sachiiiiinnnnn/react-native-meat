@@ -1,35 +1,67 @@
 import { StyleSheet, Image, View, TextInput, FlatList, Text, TouchableOpacity } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import { searchMeals } from '../constants/Data'; // Adjust the path if needed
+import { instance } from '../constants/Common';
 import icons from '../constants/Icons'; // Adjust the path if needed
 import { useNavigation } from '@react-navigation/native';
-
+import BottomContainer from '../shops_category/BottomContainer ';
+import { useSelector } from 'react-redux';
 const numColumns = 3;
 
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredMeals, setFilteredMeals] = useState(searchMeals);
+  const [searchData, setSearchData] = useState([]);
   const [isSearchActive, setIsSearchActive] = useState(false);
+  const [categoryData, setCategoryData] = useState([]);
 
+  
+  const cartState = useSelector(state => state.cart) || {}; // Default to an empty object if undefined
+
+  // Use optional chaining and default values to handle undefined cases
+  const totalItemCount = (cartState.cartItems || []).reduce((total, item) => total + (item.count || 0), 0);
+  const totalPrice = cartState.totalPrice || 0;
   const navigation = useNavigation();
 
   useEffect(() => {
-    if (searchQuery === '') {
-      setFilteredMeals(searchMeals);
-    } else {
-      const filteredData = searchMeals.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredMeals(filteredData);
+    getCategory();
+  }, []);
+
+  const getCategory = async () => {
+    try {
+      const response = await instance.get('/api/user/Category');
+      if (response.status === 200) {
+        setCategoryData(response.data);
+      }
+    } catch (error) {
+      console.error("error:", error);
     }
-  }, [searchQuery]);
+  };
+
+  const getSearch = async (productName) => {
+    try {
+      const response = await instance.get(`/api/user/SearchProduct?productName=${productName}`);
+      if (response.status === 200) {
+        setSearchData(response.data);
+      }
+    } catch (error) {
+      console.error("error:", error);
+    }
+  };
 
   const handleSearchIconClick = () => {
     setIsSearchActive(true);
   };
 
+  const handleSearchQueryChange = (text) => {
+    setSearchQuery(text);
+    if (text === '') {
+      setSearchData([]);
+    } else {
+      getSearch(text);
+    }
+  };
+
   const handleSearchResultClick = (item) => {
-    navigation.navigate('Shops', { category: item.name });
+    navigation.navigate('Shops', { category: item.categoryName });
   };
 
   return (
@@ -46,22 +78,32 @@ const Search = () => {
             placeholder="Search for any products"
             placeholderTextColor="#888"
             value={searchQuery}
-            onChangeText={setSearchQuery}
+            onChangeText={handleSearchQueryChange}
           />
         )}
       </View>
 
       <FlatList
-        data={filteredMeals}
+        data={searchData.length > 0 ? searchData : categoryData}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.itemContainer} onPress={() => handleSearchResultClick(item)}>
-            <Image source={item.source} style={styles.image} resizeMode="cover" />
-            <Text style={styles.itemText}>{item.name}</Text>
+          <TouchableOpacity
+            key={item.productId ? item.productId : item.categoryId} // Ensure a unique key here
+            style={styles.itemContainer}
+            onPress={() => handleSearchResultClick(item)}
+          >
+            <Image source={{ uri: item.image }} style={styles.image} resizeMode="cover" />
+            <Text style={styles.itemText}>{item.productName}</Text>
+            <Text style={styles.categoryText}>{item.categoryName}</Text>
           </TouchableOpacity>
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.productId ? item.productId.toString() : item.categoryId.toString()} // Convert to string if necessary
         numColumns={numColumns}
         contentContainerStyle={styles.searchItems}
+      />
+            <BottomContainer
+        totalItemCount={totalItemCount}
+        totalPrice={totalPrice}
+        onViewCart={() => navigation.navigate('ViewCart')}
       />
     </View>
   );
@@ -73,11 +115,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   searchContainer: {
-    paddingTop: 70, // Adjust this value as needed
+    paddingTop: 70,
     paddingHorizontal: 20,
-    backgroundColor: 'white', // Change to the desired background color
-    flexDirection: 'row', // Add this line to position the icon and input field in a row
-    alignItems: 'center', // Center items vertically
+    backgroundColor: 'white',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   searchIcon: {
     width: 24,
@@ -90,8 +132,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 10,
     borderRadius: 20,
-    marginLeft: 10, // Add some space between the icon and input field
-    flex: 1, // Allow the input field to take the remaining space
+    marginLeft: 10,
+    flex: 1,
   },
   searchItems: {
     padding: 10,
@@ -101,17 +143,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     margin: 10,
-    maxWidth: 100, // Adjust this value as needed for a good fit
+    maxWidth: 100,
   },
   image: {
-    width: 80, // Fixed width for image
-    height: 80, // Fixed height for image
+    width: 80,
+    height: 80,
     borderRadius: 50,
   },
   itemText: {
     marginTop: 5,
     fontSize: 13,
     fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  categoryText: {
+    marginTop: 2,
+    fontSize: 12,
+    color: '#666',
     textAlign: 'center',
   },
 });

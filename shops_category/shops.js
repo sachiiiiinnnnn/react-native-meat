@@ -1,43 +1,151 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, Image, FlatList, TouchableOpacity, ScrollView, TextInput } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { mutton, fish, chicken, prawn, beaf, egg } from '../constants/Data';
 import Theme from '../constants/Theme';
 import BottomContainer from '../shops_category/BottomContainer ';
-import ViewCart from '../Viewcard/ViewCart';
-
-const initialData = {
-  chicken: chicken.map(item => ({ ...item, count: 0 })),
-  mutton: mutton.map(item => ({ ...item, count: 0 })),
-  fish: fish.map(item => ({ ...item, count: 0 })),
-  beaf: beaf.map(item => ({ ...item, count: 0 })),
-  egg: egg.map(item => ({ ...item, count: 0 })),
-  prawn: prawn.map(item => ({ ...item, count: 0 })),
-};
-
-const redContainerImages = [
-  { image: require('../assets/images/login/chickenn.png'), name: 'Chicken', key: 'chicken' },
-  { image: require('../assets/images/shop/mutton1.jpg'), name: 'Mutton', key: 'mutton' },
-  { image: require('../assets/images/shop/fish.jpg'), name: 'Fish', key: 'fish' },
-  { image: require('../assets/images/login/chicken1.png'), name: 'Beaf', key: 'beaf' },
-  { image: require('../assets/images/login/chicken2.png'), name: 'Egg', key: 'egg' },
-  { image: require('../assets/images/login/mutton.png'), name: 'Prawn', key: 'prawn' },
-];
+import { instance } from '../constants/Common';
+import { useDispatch, useSelector } from 'react-redux';
+import { incrementItem, decrementItem } from '../redux/actions/counterActions';
 
 const Shops = () => {
   const [selectedCategory, setSelectedCategory] = useState('chicken');
-  const [data, setData] = useState(initialData);
+  const [data, setData] = useState({});
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredData, setFilteredData] = useState(redContainerImages);
-  const [cartItems, setCartItems] = useState([]);
-  const [totalPrice, setTotalPrice] = useState(0);
+  const [categoryData, setCategoryData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [isBottomContainerVisible, setIsBottomContainerVisible] = useState(false);
-
+  
   const navigation = useNavigation();
   const route = useRoute();
 
+  const cartItems = useSelector(state => state.cart.cartItems);
+  const totalPrice = useSelector(state => state.cart.totalPrice);
+  const dispatch = useDispatch();
+
+console.log("===============================" ,filteredData);
+
+  const handleIncrement = (item) => {
+    if (item.count >= item.stocks) return; 
+    dispatch(incrementItem(item));
+
+    const updatedData = {
+      ...filteredData,
+      [selectedCategory]: filteredData[selectedCategory].map(shopItem =>
+        shopItem.productId === item.productId ? { ...shopItem, count: shopItem.count + 1 } : shopItem
+      )
+    };
+    console.log("-------->>>>",updatedData);
+    setFilteredData(updatedData);
+     
+    updateCartState(updatedData); // Update cart state
+  };
+  
+  const handleDecrement = (item) => {
+    if (item.count === 0) return;
+  console.log(item);
+    dispatch(decrementItem(item));
+  
+    const updatedData = {
+      ...filteredData,
+      [selectedCategory]: filteredData[selectedCategory].map(shopItem =>
+        shopItem.productId === item.productId ? { ...shopItem, count: Math.max(1, shopItem.count - 1) } : shopItem
+      )
+    };
+    setFilteredData(updatedData);
+  
+    updateCartState(updatedData);
+  };
+  
+  const updateCartState = (updatedData) => {
+    const newCartItems = Object.values(updatedData).flat().filter(shopItem => shopItem.count > 0);
+    const newTotalPrice = newCartItems.reduce((total, item) => total + item.count * parseInt(item.price), 0);
+    setIsBottomContainerVisible(newCartItems.length > 0);
+   
+    // Update Redux store or local state with new cart items and total price
+    // This depends on your implementation. Assuming you use Redux:
+    dispatch({ type: 'UPDATE_CART', payload: { cartItems: newCartItems, totalPrice:(newCartItems)  } });
+  };
+
+  const getCategory = async () => {
+    try {
+      const response = await instance.get('/api/user/Category');
+      if (response.status === 200) {
+        setCategoryData(response.data);
+        
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  const getProduct = async (categoryName) => {
+    try {
+      const response = await instance.get(`/api/user/Product/CategoryName?categoryName=${categoryName}`);
+      if (response.status === 200) {
+        setData(prevData => ({
+          ...prevData,
+          [categoryName.toLowerCase()]: response.data.map(product => ({
+            ...product,
+            count: 0 
+          }))
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  };
+
+
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await instance.get(`/api/user/Product/CategoryName?categoryName=${selectedCategory}`);
+        if (response.status === 200) {
+          setData(prevData => ({
+            ...prevData,
+            [selectedCategory.toLowerCase()]: response.data.map(product => ({
+              ...product,
+              count: 0
+            }))
+          }));
+          setFilteredData(prevData => ({
+            ...prevData,
+            [selectedCategory.toLowerCase()]: response.data.map(product => ({
+              ...product,
+              count: 0
+            }))
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
+    fetchData();
+  }, [selectedCategory]);
+
+
+
+  const getSearch = async () => {
+    try {
+      const response = await instance.get(`/api/user/Search?productName=${searchQuery}&categoryName=${selectedCategory}`);
+      if (response.status === 200) {
+        setFilteredData(response.data);
+      } else {
+        setFilteredData([]);
+      }
+    } catch (error) {
+      console.error("Error fetching search results:", error);
+      setFilteredData([]);
+    }
+  };
+
+  
+
+  useEffect(() => {
+    getCategory();
+
     const category = route.params?.category;
     if (category) {
       setSelectedCategory(category.toLowerCase());
@@ -45,107 +153,67 @@ const Shops = () => {
   }, [route.params?.category]);
 
   useEffect(() => {
+    getProduct(selectedCategory);
+  }, [selectedCategory]);
+
+  useEffect(() => {
     if (searchQuery === '') {
-      setFilteredData(redContainerImages);
+      setFilteredData([]); // Clear filtered data when search query is empty
     } else {
-      const filtered = redContainerImages.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredData(filtered);
+      getSearch(); // Fetch search results based on the current search query
     }
   }, [searchQuery]);
+  
 
-  const handleIncrement = (item) => {
-    const updatedData = {
-      ...data,
-      [selectedCategory]: data[selectedCategory].map(shopItem =>
-        shopItem.id === item.id ? { ...shopItem, count: shopItem.count + 1 } : shopItem
-      )
-    };
-    setData(updatedData);
 
-    const newCartItems = Object.values(updatedData).flat().filter(shopItem => shopItem.count > 0);
-    const totalPriceIncrement = parseInt(item.money.replace('₹', ''));
-    setCartItems(newCartItems);
-    setTotalPrice(totalPrice + totalPriceIncrement);
-    setIsBottomContainerVisible(newCartItems.length > 0);
-  };
-
-  const handleDecrement = (item) => {
-    if (item.count === 0) return;
-    const updatedData = {
-      ...data,
-      [selectedCategory]: data[selectedCategory].map(shopItem =>
-        shopItem.id === item.id ? { ...shopItem, count: shopItem.count - 1 } : shopItem
-      )
-    };
-    setData(updatedData);
-
-    const newCartItems = Object.values(updatedData).flat().filter(shopItem => shopItem.count > 0);
-    const totalPriceDecrement = parseInt(item.money.replace('₹', ''));
-    setCartItems(newCartItems);
-    setTotalPrice(totalPrice - totalPriceDecrement);
-    setIsBottomContainerVisible(newCartItems.length > 0);
-  };
   const handleViewCart = () => {
-    navigation.navigate('ViewCart', { 
-      selectedItems: cartItems, 
-      totalPrice, 
-      updateTotalPrice // Include the updateTotalPrice function
+    navigation.navigate('ViewCart', {
+      selectedItems: cartItems,
+      totalPrice,
+      totalItemCount: cartItems.length,
+      filteredData:filteredData,setFilteredData:setFilteredData,selectedCategory:selectedCategory
     });
   };
   
-
-  const updateTotalPrice = (newTotalPrice) => {
- 
-    setTotalPrice(newTotalPrice);
-  };
-  const updateCartItems = (updatedItems) => {
-    // Update the state with the updated items
-    // This function will be passed down to the ViewCart component
-    // It will update both the cart items and the total price
-  };
+  
   const handleSearchIconPress = () => {
     setIsSearchVisible(!isSearchVisible);
+    setSearchQuery('');
   };
 
   const renderShopItem = ({ item }) => (
     <View style={styles.touchContainer}>
       <View style={styles.shopContainer}>
-        <Image source={item.image} style={styles.image} resizeMode="cover" />
-        <Text style={[styles.shopname, Theme.FONTS.bo]}>{item.name}</Text>
-        <Text style={[styles.shopLocation, Theme.FONTS.h9]}>{item.uses}</Text>
+        <Image source={{ uri: item.image }} style={styles.image} resizeMode="cover" />
+        <Text style={[styles.shopname, Theme.FONTS.bo]}>{item.productName}</Text>
+        <Text style={[styles.shopLocation, Theme.FONTS.h9]}>{item.productDescription}</Text>
         <View style={styles.pricePiecesContainer}>
-          <Text style={[styles.shopprice, Theme.FONTS.h9]}>{item.price}</Text>
-          <Text style={[styles.pieces, Theme.FONTS.h10]}>{item.pieces}</Text>
+          <Text style={[styles.shopprice, Theme.FONTS.h9]}>{item.gram} |</Text>
+          <Text style={[styles.pieces, Theme.FONTS.h10]}>{item.pieces} Pieces</Text>
         </View>
         <View style={styles.offerContainer}>
-          <Text style={[styles.money, Theme.FONTS.h9]}>{item.money}</Text>
-          <Text style={[styles.offer, Theme.FONTS.h10]}>{item.offer}</Text>
+          <Text style={[styles.money, Theme.FONTS.h9]}>₹{item.price}</Text>
+          <Text style={[styles.offer, Theme.FONTS.h10]}>95%</Text>
         </View>
         <Text style={[styles.deliveryTime, Theme.FONTS.h10]}>{item.deliveryTime}</Text>
       </View>
-      {item.count === 0 ? (
+      {!item.count ? (
         <TouchableOpacity style={styles.button} onPress={() => handleIncrement(item)}>
-          <Text style={styles.buttonText}>Add +</Text>
+          <Text style={[styles.buttonText, Theme.FONTS.h8]}>Add +</Text>
         </TouchableOpacity>
       ) : (
         <View style={styles.counterContainer}>
           <TouchableOpacity style={styles.counterButton} onPress={() => handleDecrement(item)}>
-            <Text style={styles.counterButtonText}>-</Text>
+            <Text style={[styles.counterButtonText, Theme.FONTS.h8]}>-</Text>
           </TouchableOpacity>
-          <Text style={styles.counterText}>{item.count}</Text>
+          <Text style={[styles.counterText, Theme.FONTS.h8]}>{item.count}</Text>
           <TouchableOpacity style={styles.counterButton} onPress={() => handleIncrement(item)}>
-            <Text style={styles.counterButtonText}>+</Text>
+            <Text style={[styles.counterButtonText, Theme.FONTS.h8]}>+</Text>
           </TouchableOpacity>
         </View>
       )}
     </View>
   );
-
-  const handleRedContainerImagePress = (key) => {
-    setSelectedCategory(key);
-  };
 
   return (
     <View style={styles.container}>
@@ -163,48 +231,56 @@ const Shops = () => {
         </TouchableOpacity>
       </View>
       <View style={styles.redContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {filteredData.map((item, index) => (
-            <TouchableOpacity key={index} onPress={() => handleRedContainerImagePress(item.key)} style={styles.redContainerItem}>
-              <Image source={item.image} style={styles.redContainerImage} resizeMode="cover" />
-              <Text style={[styles.redContainerText, Theme.FONTS.h8, selectedCategory === item.key && styles.boldText]}>{item.name}</Text>
-              {selectedCategory === item.key && <View style={styles.hoverLine} />}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryContainer}>
+          {categoryData.map((category) => (
+            <TouchableOpacity
+              key={category.id}
+              style={[
+                styles.redContainerItem,
+                selectedCategory === category.categoryName.toLowerCase() && styles.selectedRedContainer,
+              ]}
+              onPress={() => setSelectedCategory(category.categoryName.toLowerCase())}
+            >
+              <Image source={{ uri: category.image }} style={styles.redContainerImage} resizeMode="cover" />
+              <Text style={[styles.redContainerText, Theme.FONTS.h8, selectedCategory === category.categoryName.toLowerCase() && styles.boldText]}>
+                {category.categoryName}
+              </Text>
+              {selectedCategory === category.categoryName.toLowerCase() && <View style={styles.hoverLine} />}
             </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
       <FlatList
-        data={data[selectedCategory]}
+        data={filteredData.length > 0 ? filteredData : (filteredData[selectedCategory] || [])}
+
+        keyExtractor={(item) => item.productId}
         renderItem={renderShopItem}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.contentContainer}
-        extraData={data[selectedCategory]}
-      />
-      {isBottomContainerVisible && (
-        <BottomContainer
-          totalPrice={totalPrice}
-          onViewCart={handleViewCart}
-          updateTotalPrice={updateTotalPrice}
-          cartItems={cartItems}
-          updateCartItems={updateCartItems} 
+        contentContainerStyle={styles.list}
         />
-      )}
-    </View>
-  );
-};
+             
+  <BottomContainer
+  totalItemCount={cartItems.length}
+  totalPrice={totalPrice}
+  onViewCart={handleViewCart}
+  updateTotalPrice={updateCartState}
+  initialCount={0}
+/>
+
+      </View>
+    );
+  };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white'
+    paddingTop: 30,
+    backgroundColor: 'white',
+    paddingBottom:60
   },
   searchContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    paddingHorizontal: 10,
+    marginLeft:20,
     marginBottom: 0,
-    marginTop: 30,
   },
   searchIconContainer: {
     padding: 10,
@@ -255,10 +331,10 @@ const styles = StyleSheet.create({
   },
   touchContainer: {
     marginBottom: 10,
+    
   },
   shopContainer: {
-    width: 330,
-    height: 270,
+    width: '95%',
     alignSelf: 'center',
     borderRadius: 10,
     elevation: 3,
@@ -269,11 +345,13 @@ const styles = StyleSheet.create({
     shadowRadius: 1,
   },
   image: {
-    width: 330,
-    height: 140,
+    width: '100%',
+    height: 180,
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
+    overflow: 'hidden',
   },
+
   shopname: {
     fontWeight: 'bold',
     marginLeft: 15,
@@ -302,7 +380,7 @@ const styles = StyleSheet.create({
   },
   pieces: {
     color: Theme.COLORS.lightGray2,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   button: {
     position: 'absolute',
@@ -320,6 +398,7 @@ const styles = StyleSheet.create({
     color: Theme.COLORS.white,
     fontWeight: 'bold',
     fontSize: 13,
+    
   },
   boldText: {
     fontWeight: 'bold',
@@ -358,13 +437,13 @@ const styles = StyleSheet.create({
   counterButtonText: {
     color: Theme.COLORS.white,
     fontWeight: 'bold',
-    fontSize: 20
+    fontSize: 20,
   },
   counterText: {
     marginHorizontal: 10,
     fontWeight: 'bold',
     fontSize: 16,
-    color: Theme.COLORS.white
+    color: Theme.COLORS.white,
   },
   offerContainer: {
     flexDirection: 'row',
@@ -373,8 +452,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'green',
     marginTop: 10,
-    marginLeft: 20
+    marginLeft: 20,
   },
 });
 
-export default Shops;
+export default Shops;       

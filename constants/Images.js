@@ -26,6 +26,21 @@ const fish3 = require("../assets/images/shop/fish3.jpg")
 const fish1 = require("../assets/images/shop/fish1.jpeg")
 const fish5 = require("../assets/images/shop/fish5.jpg")
 const fish6 = require("../assets/images/shop/fish6.jpg")
+
+
+
+//dummy fish 
+const fish11 = require("../assets/images/fish/fish.jpg")
+const fish12 = require("../assets/images/fish/fish2.jpg")
+const fish13 = require("../assets/images/fish/fish3.jpg")
+const fish14 = require("../assets/images/fish/fish4.png")
+const fish15 = require("../assets/images/fish/fish5.jpg")
+const fish16 = require("../assets/images/fish/fish10.jpg")
+const fish17 = require("../assets/images/fish/fish6.jpg")
+const fish18 = require("../assets/images/fish/fish7.jpg")
+const fish19 = require("../assets/images/fish/fish8.jpg")
+const fish20 = require("../assets/images/fish/fish9.jpg")
+
 export default {
   loginBackground,
   loginBackground1,
@@ -51,4 +66,16 @@ export default {
   fish1,
   fish5,
   fish6,
+
+
+  fish11,
+  fish12,
+  fish13,
+  fish14,
+  fish15,
+  fish16,
+  fish17,
+  fish18,
+  fish19,
+  fish20
 };

@@ -19,6 +19,16 @@ const starRating = require("../assets/icons/star.png")
 
 const rightArrow = require("../assets/icons/arrow-right.png")
 
+const offer = require("../assets/icons/offer.png")
+const billSummary = require("../assets/icons/business.png")
+const address = require("../assets/icons/placeholder.png")
+
+const express = require("../assets/icons/flash.png")
+const delivery = require("../assets/icons/delivery-bike.png")
+const schedule = require("../assets/icons/schedule.png")
+
+const cancel = require("../assets/icons/cancel.png")
+
 
 export default {
   home,
@@ -40,5 +50,14 @@ export default {
   play,
   starRating,
 
-  rightArrow
+  rightArrow,
+  offer,
+  billSummary,
+  address,
+
+  express,
+  delivery,
+  schedule,
+  
+  cancel
 };

@@ -1,23 +1,42 @@
+// Account.js
 import { StyleSheet, Text, TouchableOpacity, View, Image, FlatList } from 'react-native';
 import React from 'react';
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
 import Theme from '../constants/Theme';
 import Icons from '../constants/Icons'; // Adjust the path if needed
-import Sign from '../accounts/Sign'
+
 const mealZoneData = [
-  { id: '1', name: 'Recipes', icon: Icons.recipe },
-  { id: '2', name: 'Blogs', icon: Icons.blogs },
-  { id: '3', name: 'Terms & Conditions', icon: Icons.terms },
-  { id: '4', name: 'FAQs', icon: Icons.faq },
-  { id: '5', name: 'Privacy Policy', icon: Icons.privacy },
-  { id: '6', name: 'Cancellation & Reschedule Policy', icon: Icons.cancellation },
+  { id: '1', name: 'Rewards', icon: Icons.recipe },
+  { id: '2', name: 'Orders', icon: Icons.blogs },
+  { id: '3', name: 'Notifications', icon: Icons.faq },
+  { id: '4', name: 'Contact Us', icon: Icons.privacy },
+  { id: '5', name: 'Cancellation & Reschedule Policy', icon: Icons.cancellation },
 ];
 
 const Account = () => {
   const navigation = useNavigation(); // Use the navigation hook
 
   const renderMealZoneItem = ({ item }) => (
-    <TouchableOpacity style={styles.mealsZoneContainer}>
+    <TouchableOpacity
+      style={styles.mealsZoneContainer}
+      onPress={() => {
+        if (item.name === 'Rewards') {
+          navigation.navigate('Rewards'); 
+        }
+        if (item.name === 'Orders') {
+          navigation.navigate('Orders'); 
+        }
+        if (item.name === 'Notifications') {
+          navigation.navigate('Notifi'); 
+        }
+        if (item.name === 'Contact Us') {
+          navigation.navigate('Cont'); 
+        }
+        if (item.name === 'Cancellation & Reschedule Policy') {
+          navigation.navigate('Cancellation'); 
+        }
+      }}
+    >
       <Image source={item.icon} style={styles.icon} />
       <Text style={styles.mealsZoneText}>{item.name}</Text>
     </TouchableOpacity>
@@ -30,7 +49,7 @@ const Account = () => {
         <Text style={{ fontSize: 12, marginTop: 10, color: Theme.COLORS.gray }}>
           Welcome to our app. Manage your orders, reward, address & other details.
         </Text>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={{
             backgroundColor: Theme.COLORS.maroon,
             height: 35,
@@ -44,7 +63,7 @@ const Account = () => {
           onPress={() => navigation.navigate(Sign)} // Navigate to Signup screen
         >
           <Text style={{ color: Theme.COLORS.white, fontSize: 15, fontWeight: 'bold' }}>Login / Sign Up</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       <View style={{ padding: 20 }}>
@@ -81,4 +100,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: 10,
   },
-})
+});
