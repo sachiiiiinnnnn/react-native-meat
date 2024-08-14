@@ -1,58 +1,167 @@
-import { INCREMENT_ITEM, DECREMENT_ITEM, UPDATE_CART } from '../actions/counterActions';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  INCREMENT_ITEM,
+  DECREMENT_ITEM,
+  UPDATE_CART,
+  CART,
+  // PRODUCTS_BY_CATEGORY,
+} from "../actions/counterActions";
 
 const initialState = {
-  cartItems: [],
+  data: [],
+  productsCart: [],
+  
   totalPrice: 0,
 };
 
 const cartReducer = (state = initialState, action) => {
   switch (action.type) {
     case INCREMENT_ITEM: {
+      const { productId, ...productDetails } = action.payload;
 
-      
-      const existingProductIndex = state.cartItems.findIndex(item => item.productId === action.payload.productId);
-      let updatedCartItems;
-
-      if (existingProductIndex >= 0) {
-        updatedCartItems = state.cartItems.map((item, index) =>
-          index === existingProductIndex
+      const Plus = async () => {
+        const productData = await AsyncStorage.getItem("productDetails");
+        console.log(productData);
+        const Data = JSON.parse(productData);
+        const newData = Data?.map((item) =>
+          item.productId === productId
             ? { ...item, count: item.count + 1 }
             : item
         );
-      } else {
-        updatedCartItems = [...state.cartItems, { ...action.payload, count: 1 }];
-      }
+        await AsyncStorage.setItem("productDetails", JSON.stringify(newData));
 
-      return {
-        ...state,
-        cartItems: updatedCartItems,
-        totalPrice: updatedCartItems.reduce((total, item) => total + item.count * parseInt(item.price), 0),
+        const ProductsInCart = await AsyncStorage.getItem("selectedProduct");
+        const parsedProductsInCart = JSON.parse(ProductsInCart) || [];
+
+        const productExists = parsedProductsInCart.find(
+          (item) => item.productId === productId
+        );
+        if (!productExists) {
+          const NewSelected = [
+            ...parsedProductsInCart,
+            {
+              ...productDetails,
+              productId: productId,
+              count: productDetails.count + 1,
+            },
+          ];
+          await AsyncStorage.setItem(
+            "selectedProduct",
+            JSON.stringify(NewSelected)
+          );
+          console.log("Updated selectedProduct:", NewSelected);
+        } else if (productExists) {
+          const NewSelected = parsedProductsInCart.map((item) =>
+            item.productId === productId
+              ? { ...item, count: productDetails.count + 1 }
+              : item
+          );
+          await AsyncStorage.setItem(
+            "selectedProduct",
+            JSON.stringify(NewSelected)
+          );
+        }
+
+        console.log("Updated productDetails:", newData);
+        console.log("Updated selectedProduct:", NewSelected);
       };
+
+      Plus();
+      return true;
     }
 
     case DECREMENT_ITEM: {
-      const existingProductIndex = state.cartItems.findIndex(item => item.productId === action.payload.productId);
-      let updatedCartItems;
+      const { productId, ...productDetails } = action.payload;
 
-      if (existingProductIndex >= 0) {
-        updatedCartItems = state.cartItems.map((item, index) =>
-          index === existingProductIndex && item.count > 0
+      const Minus = async () => {
+        const productData = await AsyncStorage.getItem("productDetails");
+        console.log(productData);
+        const Data = JSON.parse(productData);
+        const newData = Data?.map((item) =>
+          item.productId === productId
             ? { ...item, count: item.count - 1 }
             : item
-        ).filter(item => item.count > 0);
-      }
+        );
+        await AsyncStorage.setItem("productDetails", JSON.stringify(newData));
 
+        const ProductsInCart = await AsyncStorage.getItem("selectedProduct");
+        const parsedProductsInCart = JSON.parse(ProductsInCart) || [];
+
+        // Check if product exists in cart
+        const productExists = parsedProductsInCart.find(
+          (item) => item.productId === productId
+        );
+
+        if (productExists) {
+          if (productExists.count === 1) {
+            // Remove product if count is 1
+            const NewSelected = parsedProductsInCart.filter(
+              (item) => item.productId !== productId
+            );
+            await AsyncStorage.setItem(
+              "selectedProduct",
+              JSON.stringify(NewSelected)
+            );
+          } else if (productExists.count > 1) {
+            // Decrease count in selectedProduct
+            const NewSelected = parsedProductsInCart.map((item) =>
+              item.productId === productId
+                ? { ...item, count: item.count - 1 }
+                : item
+            );
+            await AsyncStorage.setItem(
+              "selectedProduct",
+              JSON.stringify(NewSelected)
+            );
+          }
+        }
+
+        // const ProductsInCart = await AsyncStorage.getItem("selectedProduct");
+        // const parsedProductsInCart = JSON.parse(ProductsInCart) || [];
+
+        // const productExists = parsedProductsInCart.find(
+        //   (item) => item.productId === productId
+        // );
+
+        // if (productExists.count === 1) {
+        //   const NewSelected = parsedProductsInCart.filter(
+        //     (item) => item.productId !== productId
+        //   );
+        //   await AsyncStorage.setItem(
+        //     "selectedProduct",
+        //     JSON.stringify(NewSelected)
+        //   );
+        // } else if (productExists.count > 1) {
+        //   const NewSelected = parsedProductsInCart.map((item) =>
+        //     item.productId === productId
+        //       ? { ...item, count: productDetails.count - 1 }
+        //       : item
+        //   );
+        //   await AsyncStorage.setItem(
+        //     "selectedProduct",
+        //     JSON.stringify(NewSelected)
+        //   );
+        // }
+
+        console.log("1234567890", newData);
+      };
+
+      Minus();
+      return true;
+    }
+
+    case CART: {
+      const productsCart = action.payload;
       return {
         ...state,
-        cartItems: updatedCartItems,
-        totalPrice: updatedCartItems.reduce((total, item) => total + item.count * parseInt(item.price), 0),
+        productsCart:productsCart
       };
     }
 
     case UPDATE_CART: {
       return {
         ...state,
-        cartItems: action.payload.cartItems,
+        selectedProduct: action.payload.selectedProduct,
         totalPrice: action.payload.totalPrice,
       };
     }

@@ -7,11 +7,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Theme from '../constants/Theme';
 import { instance } from '../constants/Common';
 
+
+
+
+
 const Login = ({ navigation }) => {
   const theme = useTheme();
   const [mobileNumber, setMobileNumber] = useState('');
-  const [id,setId]=useState("")
+  const [id,setId]=useState("");
+  // const [exitResponse ,setExitResponse]=useState(false)
 
+  //  const alreadyExists = {
+  //   value:exitResponse,
+  // };
+  
   const handleContinue = async () => {
     if (mobileNumber.length === 10) {
       try {
@@ -20,9 +29,12 @@ const Login = ({ navigation }) => {
         });
 
         if (response.data ) {
-          console.log(response.data);
+          console.log("0000000000000000000000",response.data);
           Alert.alert('OTP Sent', 'Please check your mobile for the OTP');
-          navigation.replace('otp', { customerId: response.data.customerId }); 
+
+          // setExitResponse(response.data.alreadyExist)
+
+          navigation.replace('otp', { customerId: response.data.customerId,userExits:response.data.alreadyExist }); 
         } else {
           Alert.alert('Error', 'Failed to generate OTP');
         }
@@ -241,5 +253,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 });
-
+// export { alreadyExists}
 export default Login;

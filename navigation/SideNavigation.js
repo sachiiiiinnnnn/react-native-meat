@@ -24,6 +24,10 @@ import Orders from '../terms&conditions/Orders';
 import Notifi from '../terms&conditions/Notifi';
 import Cont from '../terms&conditions/Cont';
 import Cancellation from '../terms&conditions/Cancellation';
+import PaymentButton from '../Viewcard/PaymentButton';
+import Loader from '../Viewcard/Loader';
+// import Loader from '../Viewcard/Loader';
+
 
 
 
@@ -68,9 +72,9 @@ const SideNavigation = () => {
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={Login} />
-          <Stack.Screen name="otp" component={otp} />
+          <Stack.Screen name="otp" component={otp} options={{ headerShown: true, title: 'Sign Up' }}/>
 
-          <Stack.Screen name="Shops" component={Shops} />
+          <Stack.Screen name="Shops" component={Shops} options={{ headerShown: true, title: 'Products' }}/>
           {/* <Stack.Screen name="ShopDetails" component={shopDetails} /> */}
           <Stack.Screen name="Home" component={BottomTab} />
           <Stack.Screen name="BottomCart" component={BottomContainer} />
@@ -80,8 +84,10 @@ const SideNavigation = () => {
           <Stack.Screen name="User" component={User} />
           <Stack.Screen name="Payment" component={Payment} options={{ headerShown: true, title: 'Payment' }}/>
           <Stack.Screen name="Address" component={Address}  options={{ headerShown: true, title: 'Address' }}/>
-          <Stack.Screen name="Segment1" component={Segment1}/>
+          <Stack.Screen name="Segment1" component={Segment1} options={{ headerShown: true, title: 'Booking time' }}/>
           {/* <Stack.Screen name="Segment2" component={Segment2} /> */}
+          {/* <Stack.Screen name="PaymentButton" component={PaymentButton} /> */}
+          {/* <Stack.Screen name="Loader" component={Loader} /> */}
           <Stack.Screen name="userName" component={userName} options={{ headerShown: true, title: 'UserName' }}/>
           <Stack.Screen name="Rewards" component={Rewards} options={{ headerShown: true, title: 'Rewards' }}/>
           <Stack.Screen name="Orders" component={Orders} options={{ headerShown: true, title: 'Orders' }}/>

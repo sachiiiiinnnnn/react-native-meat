@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Theme from '../constants/Theme';
 import { useNavigation } from '@react-navigation/native';
+import Icons from '../constants/Icons';
+import { FontAwesome } from '@expo/vector-icons'; // Import the FontAwesome icons
 
 const Segment1 = ({ route }) => {
   const { selectedItems } = route.params || {};
   const navigation = useNavigation();
 
   const [expanded, setExpanded] = useState(false);
-  const [selectedTime, setSelectedTime] = useState(null); // Track the selected time and its day
+  const [selectedTime, setSelectedTime] = useState(null);
 
   const initialItemCount = 4;
   const displayedItems = expanded ? selectedItems : selectedItems.slice(0, initialItemCount);
@@ -20,28 +22,23 @@ const Segment1 = ({ route }) => {
 
   const handlePress = async (text, day) => {
     const newSelectedTime = { text, day };
-    if (selectedTime && selectedTime.text === text && selectedTime.day === day) {
-      // Deselect the current selection if the same one is pressed again
-      setSelectedTime(null);
-      await AsyncStorage.removeItem('selectedDeliveryTime');
-    } else {
       setSelectedTime(newSelectedTime);
-      await AsyncStorage.setItem('selectedDeliveryTime', JSON.stringify(newSelectedTime));
+  };
+ 
+
+  const handleCheckout = async () => {
+    if (!selectedTime) {
+      alert('Please select a delivery time.');
+      return;
     }
+    navigation.navigate('Payment', {
+      cartItems: selectedItems,
+      deliveryTime: selectedTime.text, 
+      deliveryDay: selectedTime.day,
+    });
   };
 
-const handleCheckout = async () => {
-  if (!selectedTime) {
-    alert('Please select a delivery time.');
-    return;
-  }
-  navigation.navigate('Payment', {
-    cartItems: selectedItems,
-    deliveryTime: selectedTime.text, // Pass the selected delivery time here
-    deliveryDay: selectedTime.day, // Pass the selected day here
-  });
-};
-
+ console.log('Selected time:', selectedTime);
 
   useEffect(() => {
     const fetchSelectedDeliveryTime = async () => {
@@ -58,25 +55,32 @@ const handleCheckout = async () => {
     fetchSelectedDeliveryTime();
   }, []);
 
-  const containerTextsToday = [
-    '90 mins',
-    '6AM to 7AM',
-    '8AM to 9AM',
-    '10AM-11PM',
-    '12PM to 1PM',
-    '2PM to 3PM',
+  const formatDate = (date) => {
+    const options = { day: '2-digit', month: '2-digit', year: 'numeric', weekday: 'short' };
+    return new Intl.DateTimeFormat('en-US', options).format(date);
+  };
 
-  ];
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
 
-  const containerTextsTomorrow = [
-    '8AM to 9AM',
-    '9AM to 10PM',
-    '11AM-12PM',
-    '12PM to 1PM',
-    '1PM to 2PM',
-    '3PM to 4PM',
+  const todayDate = formatDate(today);
+  const tomorrowDate = formatDate(tomorrow);
 
-  ];
+  const generateTimeSlots = (start, end, isToday) => {
+    const slots = [];
+    const currentTime = new Date().getHours();
+    for (let hour = start; hour <= end; hour++) {
+      if (!isToday || hour > currentTime) {
+        const formattedTime = `${hour % 12 || 12}${hour < 12 ? 'AM' : 'PM'} to ${((hour + 1) % 12) || 12}${hour < 11 ? 'AM' : 'PM'}`;
+        slots.push(formattedTime);
+      }
+    }
+    return slots;
+  };
+
+  const containerTextsToday = generateTimeSlots(6, 17, true);
+  const containerTextsTomorrow = generateTimeSlots(6, 17, false);
 
   const renderContainers = (texts, day) => {
     return texts.map((text, index) => (
@@ -98,7 +102,11 @@ const handleCheckout = async () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.headerText}>ITEMS IN SHIPMENT</Text>
+      <View style={{ flexDirection: 'row' }}>
+        <Image source={Icons.shipment} style={styles.shipmentIcon} />
+        <Text style={styles.headerText}>ITEMS IN SHIPMENT</Text>
+      </View>
+
       <ScrollView contentContainerStyle={styles.contentContainer}>
         {displayedItems.map((item) => (
           <View key={item.productId} style={styles.itemContainer}>
@@ -111,17 +119,17 @@ const handleCheckout = async () => {
             <Text style={styles.seeMoreText}>See More</Text>
           </TouchableOpacity>
         )}
-        <Text style={styles.dateText}>TODAY 12, MON</Text>
+        <Text style={styles.dateText}> {todayDate}</Text>
         <View style={styles.gridContainer}>
           {renderContainers(containerTextsToday, 'Today')}
         </View>
 
-        <Text style={styles.dateText}>Tomorrow 13, TUE</Text>
-
+        <Text style={styles.dateText}> {tomorrowDate}</Text>
         <View style={styles.gridContainer}>
           {renderContainers(containerTextsTomorrow, 'Tomorrow')}
         </View>
         <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
+          <FontAwesome name="shopping-cart" size={20} color="white" style={styles.checkoutIcon} />
           <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -138,14 +146,14 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 15,
     fontWeight: 'bold',
-    marginTop: 50,
+    marginTop: 10,
   },
   contentContainer: {
     paddingBottom: 100,
   },
   itemContainer: {
     flexDirection: 'row',
-    marginBottom: 10,
+    marginBottom: 5,
   },
   itemName: {
     fontSize: 12,
@@ -170,6 +178,12 @@ const styles = StyleSheet.create({
     marginTop: 30,
     fontWeight: 'bold',
   },
+  shipmentIcon: {
+    width: 25,
+    height: 25,
+    marginRight: 10,
+    marginTop: 10,
+  },
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -177,7 +191,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   deliveryTimeContainer: {
-    width: '30%', // Adjust the width for three columns with space between
+    width: '31%',
     height: 40,
     backgroundColor: 'white',
     borderWidth: 2,
@@ -192,6 +206,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
     color: 'black',
+
     textAlign: 'center',
   },
   checkoutButton: {
@@ -200,13 +215,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'maroon',
     alignSelf: 'center',
     alignItems: 'center',
-    borderRadius: 5,
+    borderRadius: 10,
     marginTop: 30,
+    flexDirection: 'row', // Added for row alignment
+    justifyContent: 'center', // Center the contents horizontally
   },
   checkoutButtonText: {
-    marginTop: 10,
+    marginLeft: 10, // Added for spacing between icon and text
     color: 'white',
     fontWeight: 'bold',
+  },
+  checkoutIcon: {
+    marginRight: 10, // Added for spacing between icon and text
   },
 });
 

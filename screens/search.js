@@ -4,6 +4,7 @@ import { instance } from '../constants/Common';
 import icons from '../constants/Icons'; // Adjust the path if needed
 import { useNavigation } from '@react-navigation/native';
 import BottomContainer from '../shops_category/BottomContainer ';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSelector } from 'react-redux';
 const numColumns = 3;
 
@@ -15,6 +16,7 @@ const Search = () => {
 
   
   const cartState = useSelector(state => state.cart) || {}; // Default to an empty object if undefined
+  const productsCart = useSelector((state) => state.cart.productsCart);
 
   // Use optional chaining and default values to handle undefined cases
   const totalItemCount = (cartState.cartItems || []).reduce((total, item) => total + (item.count || 0), 0);
@@ -65,6 +67,10 @@ const Search = () => {
   };
 
   return (
+    <LinearGradient
+    colors={['white', 'white','white','#ffcccc',]} // Adjust gradient colors as needed
+    style={styles.gradient}
+  >
     <View style={styles.container}>
       <View style={styles.searchContainer}>
         {!isSearchActive && (
@@ -100,19 +106,24 @@ const Search = () => {
         numColumns={numColumns}
         contentContainerStyle={styles.searchItems}
       />
-            <BottomContainer
-        totalItemCount={totalItemCount}
-        totalPrice={totalPrice}
-        onViewCart={() => navigation.navigate('ViewCart')}
-      />
+           {productsCart?.length>0 &&(
+ <BottomContainer
+
+ onViewCart={() => navigation.navigate("ViewCart")}
+/>
+      )}
     </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: 'white',
+
   },
   searchContainer: {
     paddingTop: 70,

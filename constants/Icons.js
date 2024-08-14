@@ -28,6 +28,10 @@ const delivery = require("../assets/icons/delivery-bike.png")
 const schedule = require("../assets/icons/schedule.png")
 
 const cancel = require("../assets/icons/cancel.png")
+const shipment = require("../assets/icons/shipment.png")
+const payment = require("../assets/icons/payment.png")
+const edit = require("../assets/icons/edit.png")
+
 
 
 export default {
@@ -59,5 +63,8 @@ export default {
   delivery,
   schedule,
   
-  cancel
+  cancel,
+  shipment,
+  payment,
+  edit
 };

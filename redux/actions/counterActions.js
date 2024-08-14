@@ -1,8 +1,9 @@
 // cartActions.js
 
-export const INCREMENT_ITEM = 'INCREMENT_ITEM';
-export const DECREMENT_ITEM = 'DECREMENT_ITEM';
-export const INITIALIZE_ITEM_COUNT = 'INITIALIZE_ITEM_COUNT';
+export const INCREMENT_ITEM = "INCREMENT_ITEM";
+export const DECREMENT_ITEM = "DECREMENT_ITEM";
+export const CART= "CART";
+export const PRODUCTS_BY_CATEGORY = "PRODUCTS_BY_CATEGORY";
 
 export const incrementItem = (item) => ({
   type: INCREMENT_ITEM,
@@ -14,7 +15,17 @@ export const decrementItem = (item) => ({
   payload: item,
 });
 
-export const initializeItemCount = (items) => ({
-  type: INITIALIZE_ITEM_COUNT,
-  payload: items,
+
+export const cart = (productsCart) => ({
+  type: CART,
+  payload: {
+    productsCart,
+    // allProducts
+  },
+  
 });
+
+// export const ProductsByCategory = (items) => ({
+//   type: PRODUCTS_BY_CATEGORY,
+//   payload: items,
+// });

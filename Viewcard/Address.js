@@ -1,25 +1,55 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Corrected import
+import { instance } from "../constants/Common";
 
-const Address = () => {
+const Address = ({ route }) => {
   const navigation = useNavigation();
-  const [receiverName, setReceiverName] = useState('');
-  const [receiverContact, setReceiverContact] = useState('');
-  const [flatHouseBuilding, setFlatHouseBuilding] = useState('');
-  const [nearbyLandmark, setNearbyLandmark] = useState('');
+  const [locationData, setLocationData] = useState({
+    receiverName: '',
+    receiverContact: '',
+    flatHouseBuilding: '',
+    nearbyLandmark: '',
+  });
+  const [customerId, setCustomerId] = useState('');
 
-  const handleConfirmLocation = () => {
-    // Validate address fields if needed
-    const addressDetails = {
-      receiverName,
-      receiverContact,
-      flatHouseBuilding,
-      nearbyLandmark,
-    };
-    // Navigate back to Payment screen and pass addressDetails as route params
-    navigation.navigate('Payment', { addressDetails });
+  const handleConfirmLocation = async () => {
+    try {
+      const combinedAddress = `${locationData.receiverName}, ${locationData.receiverContact}, ${locationData.flatHouseBuilding}, ${locationData.nearbyLandmark}`;
+      const response = await instance.post('/api/user/Location', {
+        customerId,
+        location: combinedAddress
+      });
+
+      if (response.status === 200) {
+        navigation.navigate('Payment');
+      } else {
+        Alert.alert('Error', 'Failed to submit address details.');
+      }
+    } catch (error) {
+      console.error('Error submitting address details:', error);
+      Alert.alert('Error', 'An error occurred while submitting address details.');
+    }
   };
+
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const userData = await AsyncStorage.getItem("userDetails");
+        if (userData !== null) {
+          const parsedUserData = JSON.parse(userData);
+          setCustomerId(parsedUserData.customerId);
+        } else {
+          Alert.alert('Error', 'User details not found.');
+        }
+      } catch (error) {
+        console.error("Failed to load user details from AsyncStorage:", error);
+      }
+    };
+
+    fetchUserDetails();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -30,38 +60,38 @@ const Address = () => {
         <TextInput
           style={styles.input}
           placeholder="Receiver's name"
-          value={receiverName}
-          onChangeText={setReceiverName}
+          value={locationData.receiverName}
+          onChangeText={(text) => setLocationData(prevData => ({ ...prevData, receiverName: text }))}
         />
       </View>
 
-      <View style={styles.inputContainer}>
+      {/* <View style={styles.inputContainer}>
         <Text style={styles.label}>Receiver's contact</Text>
         <TextInput
           style={styles.input}
           placeholder="Receiver's contact"
-          value={receiverContact}
-          onChangeText={setReceiverContact}
+          value={locationData.receiverContact}
+          onChangeText={(text) => setLocationData(prevData => ({ ...prevData, receiverContact: text }))}
         />
-      </View>
+      </View> */}
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Flat/House no/Building</Text>
         <TextInput
           style={styles.input}
           placeholder="Flat/House no/Building"
-          value={flatHouseBuilding}
-          onChangeText={setFlatHouseBuilding}
+          value={locationData.flatHouseBuilding}
+          onChangeText={(text) => setLocationData(prevData => ({ ...prevData, flatHouseBuilding: text }))}
         />
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>Nearby landmark</Text>
+        <Text style={styles.label}>District</Text>
         <TextInput
           style={styles.input}
-          placeholder="Nearby landmark"
-          value={nearbyLandmark}
-          onChangeText={setNearbyLandmark}
+          placeholder="District"
+          value={locationData.nearbyLandmark}
+          onChangeText={(text) => setLocationData(prevData => ({ ...prevData, nearbyLandmark: text }))}
         />
       </View>
 

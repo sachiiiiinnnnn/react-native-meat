@@ -8,6 +8,35 @@ import ViewCart from '../Viewcard/ViewCart';
 import { instance } from '../constants/Common';
 
 const Shops = () => {
+
+
+// **********************************************************************************
+
+  function changeTimeFormat() {
+    let date = new Date();
+
+    let hours = date.getHours();
+    let minutes = date.getMinutes();
+
+    // Check whether AM or PM
+    let newformat = hours >= 12 ? 'PM' : 'AM';
+
+    // Find current hour in AM-PM Format
+    hours = hours % 12;
+
+    // To display "0" as "12"
+    hours = hours ? hours : 12;
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+
+    console.log(hours + ':' + minutes + ' ' + newformat);
+}
+
+changeTimeFormat();
+
+// **********************************************************************************
+
+
+
   const [selectedCategory, setSelectedCategory] = useState('chicken');
   const [data, setData] = useState({});
   const [isSearchVisible, setIsSearchVisible] = useState(false);
@@ -3986,9 +4015,12 @@ const Shops = () => {
 
   const getSearch = async () => {
     try {
-      const response = await instance.get(`/api/user/Search?productName=${searchQuery}&categoryName=${selectedCategory}`);
+      const response = await instance.get(`/api/user/Search?productName=${searchQuery}&categoryId=${selectedCategory}`);
       if (response.status === 200) {
-        setFilteredData(response.data);
+        setFilteredData(response.data.map(product => ({
+          ...product,
+          count: 0
+        })));
       } else {
         setFilteredData([]);
       }
@@ -4013,11 +4045,11 @@ const Shops = () => {
 
   useEffect(() => {
     if (searchQuery === '') {
-      setFilteredData([]);
+      setFilteredData(data[selectedCategory] || []); // Clear filtered data when search query is empty
     } else {
-      getSearch();
+      getSearch(); // Fetch search results based on the current search query
     }
-  }, [searchQuery]);
+  }, [searchQuery, selectedCategory]);
 
   const handleViewCart = () => {
     navigation.navigate('ViewCart', {
@@ -5223,3 +5255,800 @@ const styles = StyleSheet.create({
 export default Shops;
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useState, useRef, useEffect } from 'react';
+import { StyleSheet, Text, View, Image, FlatList, TouchableOpacity, Animated, Alert } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
+import Icons from '../constants/Icons'; // Adjust the path as needed
+import { useNavigation } from '@react-navigation/native';
+import Theme from '../constants/Theme';
+import PaymentButton from './PaymentButton';
+import { instance } from '../constants/Common';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Corrected import
+
+const Payment = ({ route }) => {
+  const { cartItems = [], totalPrice = 0, deliveryTime = '', deliveryDay = '' } = route.params || {};
+  const navigation = useNavigation();
+  const [isOnlineMode, setIsOnlineMode] = useState(false);
+  const [fetchedAddressDetails, setFetchedAddressDetails] = useState([]);
+
+  const toggleSwitch = () => setIsOnlineMode(previousState => !previousState);
+
+  const getAddress = async (id) => {
+    try {
+      const response = await instance.get(`/api/user/Location?customerId=${id}`);
+      if (response.status === 200) {
+        setFetchedAddressDetails(response.data);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const userData = await AsyncStorage.getItem("userDetails");
+        if (userData !== null) {
+          const parsedUserData = JSON.parse(userData);
+          getAddress(parsedUserData.customerId);
+        } else {
+          Alert.alert('Error', 'User details not found.');
+        }
+      } catch (error) {
+        console.error("Failed to load user details from AsyncStorage:", error);
+      }
+    };
+
+    fetchUserDetails();
+  }, []);
+
+  const renderCartItem = ({ item }) => (
+    <View style={styles.itemContainer}>
+      <View style={styles.itemDetails}>
+        <Text style={styles.itemName}>{item.productName}</Text>
+        <Text style={styles.itemCount}>Quantity: {item.count}</Text>
+      </View>
+      <Text style={styles.itemPrice}>₹{item.count * item.price}</Text>
+    </View>
+  );
+
+  const handleDelete = (id) => {
+    Alert.alert(
+      "Confirm Delete",
+      "Are you sure you want to delete this address?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", onPress: () => {
+          setFetchedAddressDetails(fetchedAddressDetails.filter(item => item.id !== id));
+          // Optionally, also delete the address from the backend here
+        } }
+      ]
+    );
+  };
+
+  const renderAddressItem = ({ item }) => (
+    <Swipeable
+      renderRightActions={() => (
+        <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item.id)}>
+          <Text style={styles.deleteButtonText}>Delete</Text>
+        </TouchableOpacity>
+      )}
+    >
+      <View style={styles.addressContainer}>
+        <Text style={styles.addressHeading}>Delivery Address:</Text>
+        <Text style={styles.addressDetail}>Address: {item.location}</Text>
+      </View>
+    </Swipeable>
+  );
+
+  const calculateItemTotal = (cartItems) => {
+    let total = 0;
+    cartItems.forEach((item) => {
+      total += item.count * item.price;
+    });
+    return total.toFixed(2);
+  };
+
+  const calculateGST = (cartItems) => {
+    const itemTotal = parseFloat(calculateItemTotal(cartItems));
+    const GSTPercentage = 18; // Assuming 18% GST
+    const GSTAmount = (itemTotal * GSTPercentage) / 100;
+    return GSTAmount.toFixed(2);
+  };
+
+  const calculateTotalPrice = () => {
+    const itemTotal = parseFloat(calculateItemTotal(cartItems));
+    const GST = parseFloat(calculateGST(cartItems));
+    const deliveryFees = 30; // Example delivery fee
+    const platformFees = 10; // Example platform fee
+    const grandTotal = itemTotal + GST + deliveryFees + platformFees;
+    return grandTotal.toFixed(2);
+  };
+
+  return (
+    <View style={{ flex: 1, backgroundColor: 'white' }}>
+      <FlatList
+        data={cartItems}
+        keyExtractor={(item) => item.productId}
+        renderItem={renderCartItem}
+        ListHeaderComponent={() => (
+          <View style={styles.headerContent}>
+            <View style={styles.offerContainer}>
+              <Image source={Icons.offer} style={styles.offerIcon} />
+              <View>
+                <Text style={styles.offerText}>Save ₹50 more with SLASH50</Text>
+                <Text style={styles.couponText}>View All restaurant coupons</Text>
+              </View>
+              <TouchableOpacity style={styles.applyButton}>
+                <Text style={styles.applyButtonText}>APPLY</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.deliveryDetails}>
+              <Text style={[Theme.FONTS.h8]}>Delivery Time: {deliveryTime}</Text>
+              <Text style={[Theme.FONTS.h8]}>Delivery Day: {deliveryDay}</Text>
+            </View>
+          </View>
+        )}
+        ListFooterComponent={() => (
+          <View style={styles.footerContent}>
+            <View style={styles.billSummary}>
+              <View style={styles.billSummaryRow}>
+                <Image source={Icons.billSummary} style={styles.billSummaryIcon} />
+                <Text style={styles.billSummaryText}>Bill Summary</Text>
+              </View>
+              <View style={styles.priceDetails}>
+                <View style={styles.priceRow}>
+                  <Text style={styles.priceText}>Item total</Text>
+                  <Text style={styles.priceValue}>₹{calculateItemTotal(cartItems)}</Text>
+                </View>
+                <View style={styles.priceRow}>
+                  <Text style={styles.priceText}>GST</Text>
+                  <Text style={styles.priceValue}>₹{calculateGST(cartItems)}</Text>
+                </View>
+                <View style={styles.priceRow}>
+                  <Text style={styles.priceText}>Delivery Fees</Text>
+                  <Text style={styles.priceValue}>₹30</Text>
+                </View>
+                <View style={styles.priceRow}>
+                  <Text style={styles.priceText}>Platform Fees</Text>
+                  <Text style={styles.priceValue}>₹10</Text>
+                </View>
+                <View style={[styles.priceRow, styles.totalRow]}>
+                  <Text style={styles.priceText}>Grand Total</Text>
+                  <Text style={styles.priceValue}>₹{calculateTotalPrice()}</Text>
+                </View>
+              </View>
+            </View>
+            <View style={styles.paymentContainer}>
+              <View style={{ flexDirection: 'row' }}>
+                <Image source={Icons.payment} style={styles.paymentIcon} />
+                <Text style={styles.title}>Payment mode</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.text}>Online mode</Text>
+                <CustomSwitch isOn={isOnlineMode} onToggle={toggleSwitch} />
+              </View>
+            </View>
+            {fetchedAddressDetails.length > 0 ? (
+              <FlatList
+              
+                data={fetchedAddressDetails}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={renderAddressItem}
+                ListFooterComponent={() => (
+                  <TouchableOpacity
+                    style={styles.addLocationButton}
+                    onPress={() => navigation.navigate('Address')}
+                  >
+                    <Image source={Icons.address} style={styles.offerIcon} />
+                    <Text style={styles.addLocationButtonText}>Add Location</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            ) : (
+              <Text style={styles.noDataText}>No data found</Text>
+            )}
+          </View>
+        )}
+        contentContainerStyle={styles.contentContainer}
+      />
+      <View style={styles.totalContainer}>
+        <Text style={styles.totalText}>Total: ₹{calculateTotalPrice()}</Text>
+        <TouchableOpacity>
+          <PaymentButton onPress={handleAddToPayment} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default Payment;
+
+const styles = StyleSheet.create({
+  // ... other styles
+  addressContainer: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 5,
+    width: '90%',
+    height: 80,
+    alignSelf: 'center',
+  },
+  addressHeading: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  addressDetail: {
+    fontSize: 14,
+  },
+  deleteButton: {
+    backgroundColor: 'red',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 100,
+    height: '100%',
+    borderRadius: 5,
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    padding: 10,
+  },
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useState, useRef, useEffect } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  FlatList,
+  TouchableOpacity,
+  Animated,
+} from "react-native";
+import Icons from "../constants/Icons"; // Adjust the path as needed
+import { useNavigation } from "@react-navigation/native";
+import Theme from "../constants/Theme";
+import PaymentButton from "./PaymentButton";
+import { instance } from "../constants/Common";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Corrected import
+
+const Payment = ({ route }) => {
+  const {
+    cartItems = [],
+    totalPrice = 0,
+    deliveryTime = "",
+    deliveryDay = "",
+  } = route.params || {};
+
+  const navigation = useNavigation();
+  const [isOnlineMode, setIsOnlineMode] = useState(false);
+  const [fetchedAddressDetails, setfetchedAddressDetails] = useState([]);
+  const [selectedAddress, setSelectedAddress] = useState(null);
+
+  const toggleSwitch = () => setIsOnlineMode(prev => !prev);
+
+  const CustomSwitch = ({ isOn, onToggle }) => {
+    const animatedValue = useRef(new Animated.Value(isOn ? 24 : 2)).current;
+
+    const handleToggle = () => {
+      const toValue = isOn ? 2 : 24;
+      Animated.timing(animatedValue, {
+        toValue,
+        duration: 300,
+        useNativeDriver: false,
+      }).start();
+      onToggle();
+    };
+
+    return (
+      <TouchableOpacity
+        onPress={handleToggle}
+        style={[styles.slider, isOn && styles.sliderOn]}
+      >
+        <Animated.View style={[styles.knob, { left: animatedValue }]} />
+      </TouchableOpacity>
+    );
+  };
+
+  const getAddress = async (id) => {
+    try {
+      const response = await instance.get(`/api/user/Location?customerId=${id}`);
+      if (response.status === 200) {
+        setfetchedAddressDetails(response.data);
+        // Set the first address as the selected one if no address is selected
+        if (!selectedAddress && response.data.length > 0) {
+          setSelectedAddress(response.data[0]);
+        }
+      }
+    } catch (error) {
+      console.error("error:", error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const userData = await AsyncStorage.getItem("userDetails");
+        if (userData !== null) {
+          const parsedUserData = JSON.parse(userData);
+          getAddress(parsedUserData.customerId);
+        } else {
+          Alert.alert("Error", "User details not found.");
+        }
+      } catch (error) {
+        console.error("Failed to load user details from AsyncStorage:", error);
+      }
+    };
+
+    fetchUserDetails();
+  }, []);
+
+  const renderCartItem = ({ item }) => (
+    <View style={styles.itemContainer}>
+      <View style={styles.itemDetails}>
+        <Text style={styles.itemName}>{item.productName}</Text>
+        <Text style={styles.itemCount}>Quantity: {item.count}</Text>
+      </View>
+      <Text style={styles.itemPrice}>₹{item.count * item.price}</Text>
+    </View>
+  );
+
+  const calculateItemTotal = (cartItems) => {
+    let total = 0;
+    cartItems.forEach((item) => {
+      total += item.count * item.price;
+    });
+    return total.toFixed(2);
+  };
+
+  const calculateGST = (cartItems) => {
+    const itemTotal = parseFloat(calculateItemTotal(cartItems));
+    const GSTPercentage = 18; // Assuming 18% GST
+    const GSTAmount = (itemTotal * GSTPercentage) / 100;
+    return GSTAmount.toFixed(2);
+  };
+
+  const calculateTotalPrice = () => {
+    const itemTotal = parseFloat(calculateItemTotal(cartItems));
+    const GST = parseFloat(calculateGST(cartItems));
+    const deliveryFees = 30; // Example delivery fee
+    const platformFees = 10; // Example platform fee
+    const grandTotal = itemTotal + GST + deliveryFees + platformFees;
+    return grandTotal.toFixed(2);
+  };
+
+  return (
+    <View style={{ flex: 1, backgroundColor: "white" }}>
+      <FlatList
+        data={cartItems}
+        keyExtractor={(item) => item.productId}
+        renderItem={renderCartItem}
+        ListHeaderComponent={() => (
+          <View style={styles.headerContent}>
+            {/* Offer Container */}
+            <View style={styles.offerContainer}>
+              <Image source={Icons.offer} style={styles.offerIcon} />
+              <View>
+                <Text style={styles.offerText}>Save ₹50 more with SLASH50</Text>
+                <Text style={styles.couponText}>
+                  View All restaurant coupons
+                </Text>
+              </View>
+              <TouchableOpacity style={styles.applyButton}>
+                <Text style={styles.applyButtonText}>APPLY</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Display Selected Delivery Time */}
+            <View style={styles.deliveryDetails}>
+              <Text style={[Theme.FONTS.h8]}>
+                Delivery Time: {deliveryTime}
+              </Text>
+              <Text style={[Theme.FONTS.h8]}>Delivery Day: {deliveryDay}</Text>
+            </View>
+          </View>
+        )}
+        ListFooterComponent={() => (
+          <View style={styles.footerContent}>
+            {/* Bill Summary */}
+            <View style={styles.billSummary}>
+              <View style={styles.billSummaryRow}>
+                <Image
+                  source={Icons.billSummary}
+                  style={styles.billSummaryIcon}
+                />
+                <Text style={styles.billSummaryText}>Bill Summary</Text>
+              </View>
+              <View style={styles.priceDetails}>
+                <View style={styles.priceRow}>
+                  <Text style={styles.priceText}>Item total</Text>
+                  <Text style={styles.priceValue}>
+                    ₹{calculateItemTotal(cartItems)}
+                  </Text>
+                </View>
+                <View style={styles.priceRow}>
+                  <Text style={styles.priceText}>GST</Text>
+                  <Text style={styles.priceValue}>
+                    ₹{calculateGST(cartItems)}
+                  </Text>
+                </View>
+                <View style={styles.priceRow}>
+                  <Text style={styles.priceText}>Delivery Fees</Text>
+                  <Text style={styles.priceValue}>₹30</Text>
+                </View>
+                <View style={styles.priceRow}>
+                  <Text style={styles.priceText}>Platform Fees</Text>
+                  <Text style={styles.priceValue}>₹10</Text>
+                </View>
+                <View style={[styles.priceRow, styles.totalRow]}>
+                  <Text style={styles.priceText}>Grand Total</Text>
+                  <Text style={styles.priceValue}>
+                    ₹{calculateTotalPrice()}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Payment Mode */}
+            <View style={styles.paymentContainer}>
+              <View style={{ flexDirection: "row" }}>
+                <Image source={Icons.payment} style={styles.paymentIcon} />
+                <Text style={styles.title}>Payment mode</Text>
+              </View>
+
+              <View style={styles.row}>
+                <Text style={styles.text}>Online mode</Text>
+                <CustomSwitch isOn={isOnlineMode} onToggle={toggleSwitch} />
+              </View>
+            </View>
+
+            <FlatList
+              data={fetchedAddressDetails}
+              horizontal
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <View style={styles.addressContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.addressCard,
+                      selectedAddress === item && styles.selectedAddress,
+                    ]}
+                    onPress={() => setSelectedAddress(item)}
+                  >
+                    <View style={styles.addressContent}>
+                      <Text style={styles.addressHeading}>
+                        Delivery Address:
+                      </Text>
+                      <Text style={styles.addressDetail}>
+                        Address: {item.location}
+                      </Text>
+                    </View>
+                    {selectedAddress === item && (
+                      <View style={styles.checkmarkContainer}>
+                        <Text style={styles.checkmark}>✔</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              )}
+              contentContainerStyle={styles.contentContainer}
+            />
+
+            {/* Add Location Button */}
+            <TouchableOpacity
+              style={styles.addLocationButton}
+              onPress={() => navigation.navigate("Address")}
+            >
+              <Image source={Icons.address} style={styles.offerIcon} />
+              <Text style={styles.addLocationButtonText}>Add Location</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        contentContainerStyle={styles.contentContainer}
+      />
+
+      {/* Total Container at Bottom */}
+      <View style={styles.totalContainer}>
+        <Text style={styles.totalText}>₹{calculateTotalPrice()}</Text>
+        <PaymentButton title="Proceed to Payment" />
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  headerContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  offerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFE4E1",
+    padding: 10,
+    borderRadius: 5,
+  },
+  offerIcon: {
+    width: 30,
+    height: 30,
+    resizeMode: "contain",
+  },
+  offerText: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  couponText: {
+    fontSize: 12,
+    color: "#888",
+  },
+  applyButton: {
+    backgroundColor: "#FF6347",
+    padding: 5,
+    borderRadius: 5,
+  },
+  applyButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  deliveryDetails: {
+    marginTop: 10,
+  },
+  itemContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+  },
+  itemDetails: {
+    flex: 1,
+  },
+  itemName: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  itemCount: {
+    fontSize: 14,
+    color: "#888",
+  },
+  itemPrice: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#FF6347",
+  },
+  footerContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  billSummary: {
+    backgroundColor: "#F0F8FF",
+    borderRadius: 5,
+    padding: 10,
+  },
+  billSummaryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  billSummaryIcon: {
+    width: 30,
+    height: 30,
+    resizeMode: "contain",
+  },
+  billSummaryText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginLeft: 10,
+  },
+  priceDetails: {
+    marginTop: 10,
+  },
+  priceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 5,
+  },
+  priceText: {
+    fontSize: 14,
+  },
+  priceValue: {
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  totalRow: {
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
+    marginTop: 10,
+  },
+  totalContainer: {
+    padding: 20,
+    backgroundColor: "#F5F5F5",
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
+  },
+  totalText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  paymentContainer: {
+    backgroundColor: "#F0F8FF",
+    padding: 10,
+    borderRadius: 5,
+  },
+  paymentIcon: {
+    width: 30,
+    height: 30,
+    resizeMode: "contain",
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginLeft: 10,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginVertical: 5,
+  },
+  text: {
+    fontSize: 14,
+  },
+  slider: {
+    width: 50,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#ddd",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  sliderOn: {
+    backgroundColor: "#4CAF50",
+  },
+  knob: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "white",
+    position: "absolute",
+  },
+  addressContainer: {
+    marginHorizontal: 5,
+  },
+  addressCard: {
+    backgroundColor: "#F5F5F5",
+    borderRadius: 5,
+    padding: 10,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  selectedAddress: {
+    borderColor: "#4CAF50",
+    borderWidth: 2,
+  },
+  addressContent: {
+    flex: 1,
+  },
+  addressHeading: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  addressDetail: {
+    fontSize: 14,
+    color: "#888",
+  },
+  checkmarkContainer: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+  },
+  checkmark: {
+    fontSize: 18,
+    color: "#4CAF50",
+  },
+  contentContainer: {
+    paddingBottom: 20,
+  },
+  addLocationButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#E0FFFF",
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  addLocationButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginLeft: 10,
+  },
+});
+
+export default Payment;
