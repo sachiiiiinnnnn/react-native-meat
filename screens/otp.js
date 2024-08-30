@@ -17,6 +17,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const Otp = ({ navigation }) => {
   const route = useRoute();
   const { customerId ,userExits} = route.params;
+  // navigation.replace("Orders", { customerId:customerId });
 
 
   const [otp, setOtp] = useState(["", "", "", ""]);
@@ -75,12 +76,16 @@ const Otp = ({ navigation }) => {
         customerName,
         customerEmail,
         customerId,
+      
       });
+
       if (response.status === 200) {
+        
         await AsyncStorage.setItem(
           "userDetails",
-          JSON.stringify(response.data.result[0])
+          JSON.stringify(response.data[0])
         );
+
         navigation.replace("Home");
       }
     } catch (error) {

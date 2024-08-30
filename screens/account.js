@@ -25,7 +25,12 @@ const mealZoneData = [
   { id: "2", name: "Orders", icon: Icons.blogs },
   { id: "3", name: "Notifications", icon: Icons.faq },
   { id: "4", name: "Contact Us", icon: Icons.privacy },
-  { id: "5", name: "Cancellation & Reschedule Policy", icon: Icons.cancellation },
+  {
+    id: "5",
+    name: "Cancellation & Reschedule Policy",
+    icon: Icons.cancellation,
+  },
+  { id: "6", name: "Complaint", icon: Icons.blogs },
 ];
 
 const Account = () => {
@@ -35,6 +40,7 @@ const Account = () => {
   const [email, setEmail] = useState("");
   const [number, setNumber] = useState("");
   const [customerId, setCustomerId] = useState("");
+  const [customerImage, setCustomerImage] = useState("");
   const [originalUserData, setOriginalUserData] = useState({});
   const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -49,6 +55,9 @@ const Account = () => {
           setEmail(parsedUserData.customerEmail);
           setNumber(parsedUserData.customerMobile);
           setCustomerId(parsedUserData.customerId);
+          setCustomerImage(parsedUserData.image);
+          // console.log(",,,,,,,,,,,,,,,,,,",customerImage);
+
           setOriginalUserData(parsedUserData);
         } else {
           setIsLoggedIn(false);
@@ -78,7 +87,7 @@ const Account = () => {
       Alert.alert("Invalid Email", "Please enter a valid email address.");
       return;
     }
-    
+
     try {
       const response = await instance.put("/api/user/Login/Edit", userData);
       if (response.status === 200) {
@@ -143,6 +152,44 @@ const Account = () => {
 
     if (!result.canceled) {
       setSelectedImage(result.assets[0].uri);
+      handleImageUpload(result.assets[0].uri);
+    }
+  };
+
+  const handleImageUpload = async (imageUri) => {
+    if (!imageUri) {
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("customerId", customerId);
+    formData.append("image", {
+      uri: imageUri,
+      type: "image/jpeg",
+      name: "profile.jpg",
+    });
+
+    try {
+      const response = await instance.put(
+        "/api/user/Login/customerProfile",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        Alert.alert("Success", "Image uploaded successfully");
+      } else {
+        Alert.alert(
+          "Error",
+          `Failed to upload image. Status code: ${response.status}`
+        );
+      }
+    } catch (error) {
+      console.error("Image upload error:", error); // Log the error for debugging
     }
   };
 
@@ -163,7 +210,6 @@ const Account = () => {
 
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-
   const renderMealZoneItem = ({ item }) => (
     <TouchableOpacity
       style={styles.mealsZoneContainer}
@@ -183,6 +229,9 @@ const Account = () => {
         if (item.name === "Cancellation & Reschedule Policy") {
           navigation.navigate("Cancellation");
         }
+        if (item.name === "Complaint") {
+          navigation.navigate("Complaint");
+        }
       }}
     >
       <Image source={item.icon} style={styles.icon} />
@@ -197,26 +246,49 @@ const Account = () => {
     >
       <View style={styles.container}>
         <View style={{ padding: 20, marginTop: 20 }}>
-          <Text style={{ fontSize: 20, fontWeight: "bold" }}>Hey Meatlover</Text>
-          <Text style={{ fontSize: 12, marginTop: 10, color: Theme.COLORS.gray }}>
-            Welcome to our app. Manage your orders, reward, address & other details.
+          <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+            Hey Meatlover
+          </Text>
+          <Text
+            style={{ fontSize: 12, marginTop: 10, color: Theme.COLORS.gray }}
+          >
+            Welcome to our app. Manage your orders, reward, address & other
+            details.
           </Text>
           <View style={styles.infoContainer}>
-            <TouchableOpacity
-              style={styles.imageContainer}
-              onPress={handleImagePick}
-            >
-              <Image
-                source={
-                  selectedImage
-                    ? { uri: selectedImage }
-                    : {
-                        uri: "data:image/png;base64,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",
-                      }
-                }
-                style={styles.image}
-              />
-            </TouchableOpacity>
+            {customerImage.length > 0 ? (
+              <TouchableOpacity
+                style={styles.imageContainer} 
+                onPress={() => {
+                  handleImagePick(); // To pick the image
+                  handleImageUpload(); // To upload the image separately
+                }}
+              >
+                <Image source={{ uri: customerImage }} style={styles.image} />
+              </TouchableOpacity>
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={styles.imageContainer}
+                  onPress={() => {
+                    handleImagePick(); // To pick the image
+                    handleImageUpload(); // To upload the image separately
+                  }}
+                >
+                  <Image
+                    source={
+                      selectedImage
+                        ? { uri: selectedImage }
+                        : {
+                            uri: "data:image/png;base64,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",
+                          }
+                    }
+                    style={styles.image}
+                  />
+                </TouchableOpacity>
+              </>
+            )}
+
             {isLoggedIn ? (
               <>
                 <View style={styles.textContainer}>
@@ -234,27 +306,27 @@ const Account = () => {
               </>
             ) : (
               <TouchableOpacity
-              style={{
-                borderWidth:1,
-                borderColor:'maroon',
-                width: "40%",
-                height: 45,
-                alignSelf: "center",
-                alignItems: "center",
-                marginBottom: 20,
-                justifyContent: "center",
-                borderRadius: 10,
-                marginTop: 20,
-                marginLeft: 60,
-              }}
-              onPress={() => navigation.navigate("Login")}
-            >
-              <Text
-                style={{ color: "maroon", fontWeight: "bold", fontSize: 15 }}
+                style={{
+                  borderWidth: 1,
+                  borderColor: "maroon",
+                  width: "40%",
+                  height: 45,
+                  alignSelf: "center",
+                  alignItems: "center",
+                  marginBottom: 20,
+                  justifyContent: "center",
+                  borderRadius: 10,
+                  marginTop: 20,
+                  marginLeft: 60,
+                }}
+                onPress={() => navigation.navigate("Login")}
               >
-                Sign Up
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={{ color: "maroon", fontWeight: "bold", fontSize: 15 }}
+                >
+                  Sign Up
+                </Text>
+              </TouchableOpacity>
             )}
           </View>
         </View>
@@ -269,7 +341,7 @@ const Account = () => {
         </View>
       </View>
       {isLoggedIn && (
-          <TouchableOpacity
+        <TouchableOpacity
           style={{
             backgroundColor: "maroon",
             width: "60%",
@@ -287,21 +359,18 @@ const Account = () => {
           </Text>
         </TouchableOpacity>
       )}
-    
-            {selectedImage && (
-              <View style={styles.selectedImageContainer}>
-                {/* <Text style={styles.selectedImageText}>Selected Image:</Text> */}
-                <Image
-                  source={{ uri: selectedImage }}
-                  style={styles.selectedImage}
-                />
-                <TouchableOpacity onPress={handleCropImage}>
-                  {/* <Text style={styles.cropButton}>Crop Image</Text> */}
-                </TouchableOpacity>
-              </View>
-            )}
-       
-      <Modal visible={modalVisible} animationType="slide" transparent={true} >
+
+      {selectedImage && (
+        <View style={styles.selectedImageContainer}>
+          {/* <Text style={styles.selectedImageText}>Selected Image:</Text> */}
+          <Image source={{ uri: selectedImage }} style={styles.selectedImage} />
+          <TouchableOpacity onPress={handleCropImage}>
+            {/* <Text style={styles.cropButton}>Crop Image</Text> */}
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Edit Profile</Text>
@@ -318,7 +387,11 @@ const Account = () => {
               placeholder="Email"
             />
             <View style={styles.modalButtons}>
-              <Button title="Save" onPress={handleSave}      disabled={!validateEmail(email)}/>
+              <Button
+                title="Save"
+                onPress={handleSave}
+                disabled={!validateEmail(email)}
+              />
               <Button title="Cancel" onPress={handleCancel} />
             </View>
           </View>
@@ -416,9 +489,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     width: "90%",
     maxWidth: 400,
-  marginTop:'50%',
-    alignSelf:'center',
-    
+    marginTop: "50%",
+    alignSelf: "center",
   },
   modalTitle: {
     fontSize: 18,
@@ -438,66 +510,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import {
 //   StyleSheet,
@@ -796,16 +808,3 @@ const styles = StyleSheet.create({
 //     </LinearGradient>
 //   );
 // };
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -26,6 +26,8 @@ import Cont from '../terms&conditions/Cont';
 import Cancellation from '../terms&conditions/Cancellation';
 import PaymentButton from '../Viewcard/PaymentButton';
 import Loader from '../Viewcard/Loader';
+import Complaint from '../terms&conditions/Complaint';
+
 // import Loader from '../Viewcard/Loader';
 
 
@@ -94,6 +96,8 @@ const SideNavigation = () => {
           <Stack.Screen name="Notifi" component={Notifi} options={{ headerShown: true, title: 'Notification' }}/>
           <Stack.Screen name="Cont" component={Cont} options={{ headerShown: true, title: 'Contact Us' }}/>
           <Stack.Screen name="Cancellation" component={Cancellation} options={{ headerShown: true, title: 'Cancellation' }}/>
+          <Stack.Screen name="Complaint" component={Complaint} options={{ headerShown: true, title: 'Complaint' }}/>
+
 
 
 

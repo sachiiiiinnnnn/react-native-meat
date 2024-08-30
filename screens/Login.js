@@ -29,7 +29,6 @@ const Login = ({ navigation }) => {
         });
 
         if (response.data ) {
-          console.log("0000000000000000000000",response.data);
           Alert.alert('OTP Sent', 'Please check your mobile for the OTP');
 
           // setExitResponse(response.data.alreadyExist)

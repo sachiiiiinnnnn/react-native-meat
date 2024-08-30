@@ -63,7 +63,7 @@ const Search = () => {
   };
 
   const handleSearchResultClick = (item) => {
-    navigation.navigate('Shops', { category: item.categoryName });
+    navigation.navigate('Shops', { category: item.categoryId });
   };
 
   return (
@@ -73,20 +73,22 @@ const Search = () => {
   >
     <View style={styles.container}>
       <View style={styles.searchContainer}>
-        {!isSearchActive && (
-          <TouchableOpacity onPress={handleSearchIconClick}>
-            <Image source={icons.search} style={styles.searchIcon} />
-          </TouchableOpacity>
-        )}
-        {isSearchActive && (
+        {/* {!isSearchActive && ( */}
+          
+        {/* )} */}
+        {/* {isSearchActive && ( */}
           <TextInput
             style={styles.input}
             placeholder="Search for any products"
             placeholderTextColor="#888"
             value={searchQuery}
             onChangeText={handleSearchQueryChange}
+            
           />
-        )}
+        {/* )} */}
+        <TouchableOpacity onPress={handleSearchIconClick}>
+            <Image source={icons.search} style={styles.searchIcon} />
+          </TouchableOpacity>
       </View>
 
       <FlatList
@@ -135,7 +137,8 @@ const styles = StyleSheet.create({
   searchIcon: {
     width: 24,
     height: 24,
-    tintColor: 'black',
+    tintColor: 'gray',
+    marginLeft:10
   },
   input: {
     height: 40,
@@ -143,7 +146,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 10,
     borderRadius: 20,
-    marginLeft: 10,
+    marginLeft: 0,
     flex: 1,
   },
   searchItems: {

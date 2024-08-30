@@ -6052,3 +6052,540 @@ const styles = StyleSheet.create({
 });
 
 export default Payment;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { instance } from '../constants/Common';
+import { useRoute } from '@react-navigation/native'; // Import useRoute
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const Orders = () => {
+  const route = useRoute(); 
+  const { customerId } = route.params || {};
+
+  const [bookings, setBookings] = useState([]);
+  const [userDetails, setUserDetails] = useState(null);
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const storedUserDetails = await AsyncStorage.getItem('userDetails');
+        if (storedUserDetails !== null) {
+          setUserDetails(JSON.parse(storedUserDetails));
+        }
+      } catch (error) {
+        console.error('Failed to retrieve user details from AsyncStorage:', error);
+      }
+    };
+
+    fetchUserDetails();
+  }, []);
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      if (!customerId) return;
+
+      try {
+        const response = await instance.get(`/api/user/Booking/CustomerId?customerId=${customerId}`);
+        setBookings(response.data); 
+      } catch (error) {
+        console.error('Error fetching bookings:', error);
+      }
+    };
+
+    fetchBookings();
+  }, [customerId]);
+console.log('====================================');
+console.log(userDetails);
+console.log('====================================');
+  return (
+    <View style={styles.container}>
+      {bookings.map((booking, index) => (
+        <View key={index} style={styles.card}>
+          <View style={styles.imageContainer}>
+            <Image 
+                source={{ uri: booking.image }}
+                style={styles.image}
+            />
+          </View>
+          <View style={styles.textContainer}>
+            <View style={styles.textContent}>
+              <Text style={styles.title}>{booking.productName}</Text> 
+              <Text style={styles.description}>{booking.description}</Text> 
+              <Text style={styles.quantity}>Quantity: {booking.quantity}</Text>
+              <Text style={styles.price}>${booking.amount}</Text>
+            </View>
+            <TouchableOpacity style={styles.cancelButton}>
+              <Ionicons name="close-circle" size={20} color="white" />
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+};
+export default Orders;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'white',
+    alignItems: 'center',
+  },
+  card: {
+    backgroundColor: 'white',
+    width: '90%',
+    height: '20%',
+    marginTop: 10,
+    borderRadius: 10,
+    alignSelf: 'center',
+    elevation: 5,
+    flexDirection: 'row',
+    padding: 10,
+  },
+  imageContainer: {
+    backgroundColor: 'white',
+    width: '40%',
+    height: '92%',
+    borderRadius: 10,
+    elevation: 10,
+    margin: 5,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
+  },
+  textContainer: {
+    flex: 1,
+    marginLeft: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+ 
+  },
+  textContent: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  description: {
+    fontSize: 13,
+    color: 'gray',
+  },
+  quantity: {
+    fontSize: 14,
+  },
+  price: {
+    fontSize: 15,
+    color: 'maroon',
+    fontWeight: 'bold',
+    marginTop: 5,
+  },
+  cancelButton: {
+    flexDirection: 'row',
+    backgroundColor: 'red',
+    width: 90,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 5,
+    marginTop: 90,
+  },
+  cancelText: {
+    fontSize: 15,
+    color: 'white',
+    fontWeight: 'bold',
+    marginLeft: 5, // Add some space between the icon and text
+  },
+});
+
+
+
+
+
+
+
+
+
+
+import React, { useState, useEffect, useRef } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
+import Theme from "../constants/Theme";
+import { instance } from "../constants/Common";
+import { useRoute } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const Otp = ({ navigation }) => {
+  const route = useRoute();
+  const { customerId ,userExits} = route.params;
+  // navigation.replace("Orders", { customerId:customerId });
+
+
+  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  // const [timer, setTimer] = useState(120);
+  const inputs = useRef([]);
+  // useEffect(() => {
+  //   const countdown = setInterval(() => {
+  //     setTimer((prevTimer) => {
+  //       if (prevTimer <= 1) {
+  //         clearInterval(countdown);
+  //         Alert.alert(
+  //           "Time Expired",
+  //           "The OTP entry time has expired. Please request a new OTP."
+  //         );
+  //         return 0;
+  //       }
+  //       return prevTimer - 1;
+  //     });
+  //   }, 1000);
+
+  //   return () => clearInterval(countdown);
+  // }, []);
+
+  const handleChange = (text, index) => {
+    const newOtp = [...otp];
+    newOtp[index] = text;
+    setOtp(newOtp);
+
+    if (text && index < inputs.current.length - 1) {
+      inputs.current[index + 1].focus();
+    }
+  };
+
+  const handleContinue = async () => {
+    const enteredOtp = otp.join("");
+    const isEmailValid = emailRegex.test(customerEmail);
+    if (
+      !customerId ||
+      enteredOtp.length < 4 ||
+      (!userExits && (!customerName || !customerEmail))
+    ) {
+      Alert.alert("Missing Information", "Please fill in all required fields.");
+      return;
+    }
+
+
+    if (!userExits && !isEmailValid) {
+      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      return;
+    }
+    try {
+      const response = await instance.post("/api/user/Login", {
+        otp: enteredOtp,
+        customerName,
+        customerEmail,
+        customerId,
+      
+      });
+      if (response.status === 200) {
+        
+        await AsyncStorage.setItem(
+          "userDetails",
+          JSON.stringify(response.data.result[0])
+        );
+
+        navigation.replace("Home");
+      }
+    } catch (error) {
+      console.error("Failed to verify OTP:", error);
+      Alert.alert("Verification Failed", "Invalid OTP. Please try again.");
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+       {!userExits && (
+        <>
+          <Text style={styles.sectionTitle}>Enter your details</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your username"
+            value={customerName}
+            onChangeText={setCustomerName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your Email"
+            value={customerEmail}
+            onChangeText={setCustomerEmail}
+          />
+        </>
+      )}
+      <Text style={styles.sectionTitle}>Verify OTP</Text>
+      <View style={styles.otpContainer}>
+        {otp.map((value, index) => (
+          <TextInput
+            key={index}
+            style={styles.otpBox}
+            keyboardType="numeric"
+            maxLength={1}
+            value={value}
+            onChangeText={(text) => handleChange(text, index)}
+            ref={(ref) => (inputs.current[index] = ref)}
+          />
+        ))}
+      </View>
+      {/* <Text style={styles.timerText}>{`Time remaining: ${timer} seconds`}</Text> */}
+      <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
+        <Text style={styles.continueButtonText} >Continue</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    backgroundColor: "#fff",
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginVertical: 10,
+    color: "black",
+  },
+  input: {
+    width: "80%",
+    height: 50,
+    borderColor: "maroon",
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    fontSize: 15,
+    marginBottom: 20,
+  },
+  otpContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  otpBox: {
+    width: 50,
+    height: 50,
+    borderWidth: 1,
+    borderColor: "maroon",
+    borderRadius: 20,
+    textAlign: "center",
+    fontSize: 20,
+    marginHorizontal: 5,
+  },
+  timerText: {
+    fontSize: 13,
+    color: "gray",
+    fontWeight: "bold",
+    marginBottom: 20,
+    marginRight: 40,
+  },
+  continueButton: {
+    backgroundColor: Theme.COLORS.maroon,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5, // For Android shadow
+  },
+  continueButtonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+});
+
+export default Otp;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { instance } from '../constants/Common';
+import { useRoute } from '@react-navigation/native'; // Import useRoute
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const Orders = () => {
+  const route = useRoute(); 
+  const { customerId } = route.params || {}; 
+
+  const [bookings, setBookings] = useState([]);
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      if (!customerId) return;
+
+      try {
+        const response = await instance.get(`/api/user/Booking/CustomerId?customerId=${customerId}`);
+        setBookings(response.data); 
+      } catch (error) {
+        console.error('Error fetching bookings:', error);
+      }
+    };
+
+    fetchBookings();
+  }, [customerId]);
+
+  return (
+    <View style={styles.container}>
+      {bookings.map((booking, index) => (
+        <View key={index} style={styles.card}>
+          <View style={styles.imageContainer}>
+            <Image 
+                source={{ uri: booking.image }}
+                style={styles.image}
+            />
+          </View>
+          <View style={styles.textContainer}>
+            <View style={styles.textContent}>
+              <Text style={styles.title}>{booking.productName}</Text> 
+              <Text style={styles.description}>{booking.description}</Text> 
+              <Text style={styles.quantity}>Quantity: {booking.quantity}</Text>
+              <Text style={styles.price}>${booking.amount}</Text>
+            </View>
+            <TouchableOpacity style={styles.cancelButton}>
+              <Ionicons name="close-circle" size={20} color="white" />
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+};
+export default Orders;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'white',
+    alignItems: 'center',
+  },
+  card: {
+    backgroundColor: 'white',
+    width: '90%',
+    height: '20%',
+    marginTop: 10,
+    borderRadius: 10,
+    alignSelf: 'center',
+    elevation: 5,
+    flexDirection: 'row',
+    padding: 10,
+  },
+  imageContainer: {
+    backgroundColor: 'white',
+    width: '40%',
+    height: '92%',
+    borderRadius: 10,
+    elevation: 10,
+    margin: 5,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
+  },
+  textContainer: {
+    flex: 1,
+    marginLeft: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+ 
+  },
+  textContent: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  description: {
+    fontSize: 13,
+    color: 'gray',
+  },
+  quantity: {
+    fontSize: 14,
+  },
+  price: {
+    fontSize: 15,
+    color: 'maroon',
+    fontWeight: 'bold',
+    marginTop: 5,
+  },
+  cancelButton: {
+    flexDirection: 'row',
+    backgroundColor: 'red',
+    width: 90,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 5,
+    marginTop: 90,
+  },
+  cancelText: {
+    fontSize: 15,
+    color: 'white',
+    fontWeight: 'bold',
+    marginLeft: 5, // Add some space between the icon and text
+  },
+});

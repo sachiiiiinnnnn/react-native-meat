@@ -41,7 +41,6 @@ const Shops = () => {
   const dispatch = useDispatch();
   const Cart = useSelector((state) => state.cart.productsCart);
 
-  console.log("ProductsInCart 123456789", Cart);
 
   const handleIncrement = (item) => {
     dispatch(incrementItem(item));
@@ -88,7 +87,6 @@ const Shops = () => {
     try {
       const response = await instance.get(`api/user/Product`);
       if (response.status === 200) {
-        // console.log("response.data", response.data);
 
         await AsyncStorage.setItem(
           "productDetails",
@@ -109,31 +107,31 @@ const Shops = () => {
   };
 
 
-  // const getSearch = async () => {
-  //   try {
-  //     const response = await instance.get(`/api/user/Search?productName=${searchQuery}&categoryId=${selectedCategory}`);
-  //     if (response.status === 200) {
-  //       console.log('Search results:', response.data); 
-  //       setData(response.data);
-  //     } else {
-  //       setData([]);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching search results:", error);
-  //     setData([]);
-  //   }
-  // };
+  const getSearch = async () => {
+    try {
+      const response = await instance.get(`/api/user/Search?productName=${searchQuery}&categoryId=${selectedCategory}`);
+      if (response.status === 200) {
+        console.log('Search results:', response.data); 
+        setData(response.data);
+      } else {
+        setData([]);
+      }
+    } catch (error) {
+      console.error("Error fetching search results:", error);
+      setData([]);
+    }
+  };
 
 
-  // useEffect(() => {
-  //   if (searchQuery === '') {
-  //     // Show all categories when search is empty
-  //     setData([]);
-  //   } else {
-  //     // Fetch search results based on searchQuery
-  //     getSearch();
-  //   }
-  // }, [searchQuery]);
+  useEffect(() => {
+    if (searchQuery ==='') {
+      // Show all categories when search is empty
+      fetchUserDetails([]);
+    } else {
+      // Fetch search results based on searchQuery
+      getSearch();
+    }
+  }, [searchQuery]);
 
 
   const fetchUserDetails = async () => {
@@ -144,16 +142,7 @@ const Shops = () => {
       if (productData !== null) {
         const parseProductData = JSON.parse(productData);
         const parseProductInCart = JSON.parse(ProductsInCart);
-        console.log(
-          "ppppppppppppppppppppppppppp",
-          parseProductData,
-          "oooooooooooooooooooooooooooooo"
-        );
-        console.log(
-          "ccccccccccccccccccccc",
-          parseProductInCart,
-          "ttttttttttttttttttttt"
-        );
+        
         setData(parseProductData);
         setViewCart(parseProductInCart);
         // setViewCart(Cart);
@@ -179,7 +168,7 @@ const Shops = () => {
     if (category) {
       setSelectedCategory(category);
     }
-    AsyncStorage.removeItem("selectedProduct");
+    // AsyncStorage.removeItem("selectedProduct");
   }, [route.params?.category]);
 
   // useEffect(() => {
@@ -210,7 +199,6 @@ const Shops = () => {
   const TotalPrice =
     price.length > 0 ? price.reduce((acc, val) => acc + val, 0) : 0;
 
-  console.log("Total Price:", TotalPrice);
 
   const renderShopItem = ({ item }) => (
     <View style={styles.touchContainer}>
@@ -372,7 +360,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     tintColor: "black",
-  },
+  },//all big things comeffrom samll beginings --- Sachin
   searchInput: {
     flex: 1,
     height: 40,

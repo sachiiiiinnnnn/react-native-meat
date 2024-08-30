@@ -5,6 +5,8 @@ import Theme from '../constants/Theme';
 import { useNavigation } from '@react-navigation/native';
 import Icons from '../constants/Icons';
 import { FontAwesome } from '@expo/vector-icons'; // Import the FontAwesome icons
+import moment from 'moment';
+
 
 const Segment1 = ({ route }) => {
   const { selectedItems } = route.params || {};
@@ -20,8 +22,8 @@ const Segment1 = ({ route }) => {
     setExpanded(true);
   };
 
-  const handlePress = async (text, day) => {
-    const newSelectedTime = { text, day };
+  const handlePress = async (text, date) => {
+    const newSelectedTime = { text, date };
       setSelectedTime(newSelectedTime);
   };
  
@@ -34,7 +36,7 @@ const Segment1 = ({ route }) => {
     navigation.navigate('Payment', {
       cartItems: selectedItems,
       deliveryTime: selectedTime.text, 
-      deliveryDay: selectedTime.day,
+      deliveryDate: selectedTime.date,
     });
   };
 
@@ -82,16 +84,16 @@ const Segment1 = ({ route }) => {
   const containerTextsToday = generateTimeSlots(6, 17, true);
   const containerTextsTomorrow = generateTimeSlots(6, 17, false);
 
-  const renderContainers = (texts, day) => {
+  const renderContainers = (texts, date) => {
     return texts.map((text, index) => (
       <TouchableOpacity
         key={index}
-        onPress={() => handlePress(text, day)}
+        onPress={() => handlePress(text, date)}
         style={[
           styles.deliveryTimeContainer,
           {
-            backgroundColor: selectedTime && selectedTime.text === text && selectedTime.day === day ? 'lightgreen' : 'white',
-            borderColor: selectedTime && selectedTime.text === text && selectedTime.day === day ? 'green' : 'gray',
+            backgroundColor: selectedTime && selectedTime.text === text && selectedTime.date === date ? 'lightgreen' : 'white',
+            borderColor: selectedTime && selectedTime.text === text && selectedTime.date === date ? 'green' : 'gray',
           },
         ]}
       >
@@ -121,12 +123,12 @@ const Segment1 = ({ route }) => {
         )}
         <Text style={styles.dateText}> {todayDate}</Text>
         <View style={styles.gridContainer}>
-          {renderContainers(containerTextsToday, 'Today')}
+          {renderContainers(containerTextsToday, moment(new Date()).format('YYYY-MM-DD'))}
         </View>
 
         <Text style={styles.dateText}> {tomorrowDate}</Text>
         <View style={styles.gridContainer}>
-          {renderContainers(containerTextsTomorrow, 'Tomorrow')}
+          {renderContainers(containerTextsTomorrow, moment(new Date()).add(1, 'days').format('YYYY-MM-DD'))}
         </View>
         <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
           <FontAwesome name="shopping-cart" size={20} color="white" style={styles.checkoutIcon} />

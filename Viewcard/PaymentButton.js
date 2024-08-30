@@ -1,10 +1,16 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, Text, TouchableOpacity, StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useRef } from "react";
+import {
+  Animated,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  View,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
-const PaymentButton = () => {
+const PaymentButton = ({ onPress }) => {
   const animatedValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -19,14 +25,17 @@ const PaymentButton = () => {
 
   const translateX = animatedValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [-300, 300] // TranslateX from -300 to 300 pixels
+    outputRange: [-300, 300], // TranslateX from -300 to 300 pixels
   });
 
   return (
-    <TouchableOpacity style={styles.buttonContainer}>
+    <TouchableOpacity
+      style={styles.buttonContainer}
+      onPress={onPress}
+    >
       <View style={styles.button}>
         <AnimatedLinearGradient
-          colors={['white','maroon', 'white', 'maroon', 'white', ]}
+          colors={["white", "maroon", "white", "maroon", "white"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={[styles.gradient, { transform: [{ translateX }] }]}
@@ -40,35 +49,35 @@ const PaymentButton = () => {
 const styles = StyleSheet.create({
   buttonContainer: {
     borderRadius: 4,
-    overflow: 'hidden',
-    alignSelf: 'center',
+    overflow: "hidden",
+    alignSelf: "center",
     margin: 10,
   },
   button: {
     paddingVertical: 14,
     paddingHorizontal: 25,
     borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#EDF2EF',
-    position: 'relative',
-    overflow: 'hidden',
-    borderWidth:1,
-    borderColor:'maroon'
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#EDF2EF",
+    position: "relative",
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "maroon",
   },
   gradient: {
     ...StyleSheet.absoluteFillObject,
-    width: '200%',
+    width: "200%",
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     letterSpacing: 1,
     zIndex: 1,
-    textShadowColor: '#000',        // Shadow color
+    textShadowColor: "#000", // Shadow color
     textShadowOffset: { width: 2, height: 2 }, // Shadow offset
-    textShadowRadius: 15,            // Shadow radius
+    textShadowRadius: 15, // Shadow radius
   },
 });
 
